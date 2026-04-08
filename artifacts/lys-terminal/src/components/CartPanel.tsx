@@ -22,8 +22,8 @@ export function CartPanel({ items, total, onRemove, onAdd, onCheckout, onClear }
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <div className="flex items-center gap-2">
-          <ShoppingCart size={18} className="text-foreground" strokeWidth={1.8} />
-          <span className="font-medium text-[16px] text-foreground">{tr.cart}</span>
+          <ShoppingCart size={18} className="text-primary" strokeWidth={1.8} />
+          <span className="font-medium text-[16px] text-primary">{tr.cart}</span>
         </div>
         {items.length > 0 && (
           <button
@@ -39,11 +39,11 @@ export function CartPanel({ items, total, onRemove, onAdd, onCheckout, onClear }
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center px-4">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-              <ShoppingCart size={28} className="text-muted-foreground" strokeWidth={1.5} />
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <ShoppingCart size={28} className="text-primary/50" strokeWidth={1.5} />
             </div>
-            <p className="text-foreground font-medium text-[15px] mb-1">{tr.emptyCartTitle}</p>
-            <p className="text-muted-foreground text-[13px]">{tr.emptyCartSubtitle}</p>
+            <p className="text-primary font-medium text-[15px] mb-1">{tr.emptyCartTitle}</p>
+            <p className="text-primary/50 text-[13px]">{tr.emptyCartSubtitle}</p>
           </div>
         ) : (
           <div className="px-4 py-3 space-y-2">
@@ -93,10 +93,10 @@ export function CartPanel({ items, total, onRemove, onAdd, onCheckout, onClear }
       {items.length > 0 && (
         <div className="px-4 pb-4 pt-3 border-t border-border">
           <div className="flex items-center justify-between mb-4 px-1">
-            <span className="text-[15px] font-medium text-foreground">{tr.total}</span>
+            <span className="text-[15px] font-medium text-primary">{tr.total}</span>
             <span
               data-testid="text-cart-total"
-              className="text-[20px] font-semibold text-foreground tabular-nums"
+              className="text-[20px] font-semibold text-primary tabular-nums"
             >
               {formatPrice(total)}
             </span>

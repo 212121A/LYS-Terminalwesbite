@@ -41,7 +41,7 @@ export function LanguageSelector() {
 
       {open && (
         <div
-          className="absolute right-0 top-full mt-1.5 w-52 bg-background border border-border rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+          className="absolute right-0 top-full mt-1.5 w-52 bg-card border border-card-border rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150"
           data-testid="dropdown-language"
         >
           <div className="max-h-[min(420px,calc(100vh-120px))] overflow-y-auto scrollbar-hide py-1">
@@ -52,8 +52,8 @@ export function LanguageSelector() {
                 onClick={() => handleSelect(l.code)}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-[14px] transition-colors text-left ${
                   lang === l.code
-                    ? "bg-primary/8 text-primary font-medium"
-                    : "text-foreground hover:bg-muted"
+                    ? "bg-foreground/10 text-foreground font-medium"
+                    : "text-foreground hover:bg-foreground/5"
                 }`}
               >
                 <span className="text-[18px] leading-none shrink-0">{l.flag}</span>
