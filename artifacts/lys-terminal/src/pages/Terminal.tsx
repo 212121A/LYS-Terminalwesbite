@@ -106,12 +106,12 @@ export function Terminal() {
 
       <header className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0 bg-background">
         <div>
-          <div className="font-serif text-[28px] font-semibold tracking-tight text-foreground leading-none">LYS</div>
-          <div className="text-[10px] tracking-[0.18em] uppercase text-muted-foreground mt-0.5">Noodle Box</div>
+          <div className="font-serif text-[28px] font-semibold tracking-tight text-primary leading-none">LYS</div>
+          <div className="text-[10px] tracking-[0.18em] uppercase text-primary/60 mt-0.5">Noodle Box</div>
         </div>
 
         <div className="hidden md:block">
-          <h1 className="font-serif text-[22px] font-medium text-foreground tracking-wide">{tr.order}</h1>
+          <h1 className="font-serif text-[22px] font-medium text-primary tracking-wide">{tr.order}</h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -167,10 +167,10 @@ export function Terminal() {
                 className="mb-8"
               >
                 <div className="flex items-center gap-3 mb-4 pt-2">
-                  <h2 className="font-serif text-[22px] font-semibold text-foreground">
+                  <h2 className="font-serif text-[22px] font-semibold text-primary">
                     {getCategoryName(category.id)}
                   </h2>
-                  <div className="flex-1 h-px bg-border" />
+                  <div className="flex-1 h-px bg-primary/20" />
                 </div>
                 {category.id === "nudel-reisboxen" && (
                   <div className="mb-3 px-4 py-2.5 bg-muted/60 border border-border rounded-xl text-[13px] text-muted-foreground italic">
