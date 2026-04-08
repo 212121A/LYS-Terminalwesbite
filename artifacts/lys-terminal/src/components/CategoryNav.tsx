@@ -4,9 +4,10 @@ interface CategoryNavProps {
   categories: MenuCategory[];
   activeCategory: string;
   onSelect: (id: string) => void;
+  getCategoryName: (id: string) => string;
 }
 
-export function CategoryNav({ categories, activeCategory, onSelect }: CategoryNavProps) {
+export function CategoryNav({ categories, activeCategory, onSelect, getCategoryName }: CategoryNavProps) {
   return (
     <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4 py-3">
       {categories.map((cat) => (
@@ -20,7 +21,7 @@ export function CategoryNav({ categories, activeCategory, onSelect }: CategoryNa
               : "bg-card border border-card-border text-foreground hover:bg-muted"
           }`}
         >
-          {cat.name}
+          {getCategoryName(cat.id)}
         </button>
       ))}
     </div>
