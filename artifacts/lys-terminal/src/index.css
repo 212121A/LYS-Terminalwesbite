@@ -68,51 +68,51 @@
 }
 
 :root {
-  --button-outline: rgba(0,0,0, .10);
-  --badge-outline: rgba(0,0,0, .05);
-  --opaque-button-border-intensity: -8;
-  --elevate-1: rgba(0,0,0, .03);
-  --elevate-2: rgba(0,0,0, .08);
+  --button-outline: rgba(255,240,220, .12);
+  --badge-outline: rgba(255,240,220, .06);
+  --opaque-button-border-intensity: 8;
+  --elevate-1: rgba(255,240,220, .04);
+  --elevate-2: rgba(255,240,220, .08);
 
-  /* LYS warm beige palette */
-  --background: 37 24% 91%;
-  --foreground: 25 20% 22%;
+  /* LYS inverted — dark brown background, beige buttons */
+  --background: 25 32% 26%;
+  --foreground: 37 32% 90%;
 
-  --border: 35 18% 80%;
-  --input: 35 18% 80%;
-  --ring: 25 35% 40%;
+  --border: 25 22% 36%;
+  --input: 25 22% 36%;
+  --ring: 37 30% 72%;
 
-  --card: 38 28% 95%;
-  --card-foreground: 25 20% 22%;
-  --card-border: 35 20% 83%;
+  --card: 26 28% 32%;
+  --card-foreground: 37 30% 90%;
+  --card-border: 25 20% 38%;
 
-  --popover: 38 28% 97%;
-  --popover-foreground: 25 20% 22%;
-  --popover-border: 35 20% 83%;
+  --popover: 26 28% 32%;
+  --popover-foreground: 37 30% 90%;
+  --popover-border: 25 20% 38%;
 
-  --primary: 25 35% 35%;
-  --primary-foreground: 38 40% 96%;
+  --primary: 37 28% 87%;
+  --primary-foreground: 25 35% 22%;
 
-  --secondary: 35 15% 86%;
-  --secondary-foreground: 25 20% 30%;
+  --secondary: 25 24% 34%;
+  --secondary-foreground: 37 25% 82%;
 
-  --muted: 36 18% 87%;
-  --muted-foreground: 25 12% 52%;
+  --muted: 25 22% 31%;
+  --muted-foreground: 35 16% 60%;
 
-  --accent: 35 15% 84%;
-  --accent-foreground: 25 20% 25%;
+  --accent: 26 22% 36%;
+  --accent-foreground: 37 28% 88%;
 
-  --destructive: 0 72% 51%;
+  --destructive: 0 65% 52%;
   --destructive-foreground: 0 0% 100%;
 
-  --sidebar: 38 22% 88%;
-  --sidebar-foreground: 25 20% 22%;
-  --sidebar-border: 35 18% 78%;
-  --sidebar-primary: 25 35% 35%;
-  --sidebar-primary-foreground: 38 40% 96%;
-  --sidebar-accent: 35 15% 84%;
-  --sidebar-accent-foreground: 25 20% 25%;
-  --sidebar-ring: 25 35% 40%;
+  --sidebar: 25 30% 24%;
+  --sidebar-foreground: 37 30% 90%;
+  --sidebar-border: 25 20% 34%;
+  --sidebar-primary: 37 28% 87%;
+  --sidebar-primary-foreground: 25 35% 22%;
+  --sidebar-accent: 26 22% 36%;
+  --sidebar-accent-foreground: 37 28% 88%;
+  --sidebar-ring: 37 30% 72%;
 
   --chart-1: 25 35% 35%;
   --chart-2: 35 40% 50%;
