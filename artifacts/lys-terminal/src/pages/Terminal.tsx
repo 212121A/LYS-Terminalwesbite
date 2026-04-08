@@ -5,6 +5,8 @@ import { MenuItemCard } from "@/components/MenuItemCard";
 import { CartPanel } from "@/components/CartPanel";
 import { CategoryNav } from "@/components/CategoryNav";
 import { PaymentModal } from "@/components/PaymentModal";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { useLang } from "@/i18n/LanguageContext";
 import { ShoppingCart, CheckCircle, XCircle } from "lucide-react";
 
 function useQueryParam(key: string) {
@@ -13,6 +15,7 @@ function useQueryParam(key: string) {
 
 export function Terminal() {
   const { items, addItem, removeItem, clearCart, total, itemCount } = useCart();
+  const { tr } = useLang();
   const [activeCategory, setActiveCategory] = useState(menuData[0].id);
   const [showPayment, setShowPayment] = useState(false);
   const [showCartMobile, setShowCartMobile] = useState(false);
@@ -38,14 +41,6 @@ export function Terminal() {
   const quantityInCart = (cartId: string) => {
     const item = items.find((i) => i.id === cartId);
     return item ? item.quantity : 0;
-  };
-
-  const handleCheckout = () => {
-    setShowPayment(true);
-  };
-
-  const handlePaymentClose = () => {
-    setShowPayment(false);
   };
 
   const handleCategorySelect = (categoryId: string) => {
@@ -79,6 +74,11 @@ export function Terminal() {
     return () => observer.disconnect();
   }, []);
 
+  const getCategoryName = (categoryId: string) => {
+    const key = categoryId as keyof typeof tr.categories;
+    return tr.categories[key] ?? categoryId;
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       {paymentBanner && (
@@ -93,12 +93,12 @@ export function Terminal() {
           {paymentBanner === "success" ? (
             <>
               <CheckCircle size={18} />
-              <span>Zahlung erfolgreich! Ihre Bestellung wird zubereitet.</span>
+              <span>{tr.successBanner}</span>
             </>
           ) : (
             <>
               <XCircle size={18} />
-              <span>Zahlung abgebrochen. Sie können Ihre Bestellung erneut aufgeben.</span>
+              <span>{tr.cancelBanner}</span>
             </>
           )}
         </div>
@@ -111,32 +111,34 @@ export function Terminal() {
         </div>
 
         <div className="hidden md:block">
-          <h1 className="font-serif text-[22px] font-medium text-foreground tracking-wide">Bestellen</h1>
+          <h1 className="font-serif text-[22px] font-medium text-foreground tracking-wide">{tr.order}</h1>
         </div>
 
-        <button
-          data-testid="button-mobile-cart"
-          onClick={() => setShowCartMobile(true)}
-          className="md:hidden relative w-11 h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-sm active:scale-95 transition-transform"
-        >
-          <ShoppingCart size={20} strokeWidth={1.8} />
-          {itemCount > 0 && (
-            <span
-              data-testid="badge-cart-count"
-              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-white text-[11px] font-bold flex items-center justify-center"
-            >
-              {itemCount}
-            </span>
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <LanguageSelector />
 
-        <div className="hidden md:flex items-center gap-2">
+          <button
+            data-testid="button-mobile-cart"
+            onClick={() => setShowCartMobile(true)}
+            className="md:hidden relative w-11 h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-sm active:scale-95 transition-transform"
+          >
+            <ShoppingCart size={20} strokeWidth={1.8} />
+            {itemCount > 0 && (
+              <span
+                data-testid="badge-cart-count"
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-white text-[11px] font-bold flex items-center justify-center"
+              >
+                {itemCount}
+              </span>
+            )}
+          </button>
+
           {itemCount > 0 && (
             <span
               data-testid="badge-desktop-cart-count"
-              className="bg-primary text-primary-foreground text-[13px] font-semibold px-3 py-1 rounded-full"
+              className="hidden md:flex bg-primary text-primary-foreground text-[13px] font-semibold px-3 py-1 rounded-full"
             >
-              {itemCount} {itemCount === 1 ? "Artikel" : "Artikel"}
+              {tr.articles(itemCount)}
             </span>
           )}
         </div>
@@ -147,6 +149,7 @@ export function Terminal() {
           <div className="border-b border-border bg-background shrink-0">
             <CategoryNav
               categories={menuData}
+              getCategoryName={getCategoryName}
               activeCategory={activeCategory}
               onSelect={handleCategorySelect}
             />
@@ -164,12 +167,14 @@ export function Terminal() {
                 className="mb-8"
               >
                 <div className="flex items-center gap-3 mb-4 pt-2">
-                  <h2 className="font-serif text-[22px] font-semibold text-foreground">{category.name}</h2>
+                  <h2 className="font-serif text-[22px] font-semibold text-foreground">
+                    {getCategoryName(category.id)}
+                  </h2>
                   <div className="flex-1 h-px bg-border" />
                 </div>
                 {category.id === "nudel-reisboxen" && (
                   <div className="mb-3 px-4 py-2.5 bg-muted/60 border border-border rounded-xl text-[13px] text-muted-foreground italic">
-                    Inkl. Soße: Sojasoße, Süßsauersoße oder Thaicurry mit Kokosmilch
+                    {tr.noodleBoxNote}
                   </div>
                 )}
                 <div className="space-y-2">
@@ -194,7 +199,7 @@ export function Terminal() {
             total={total}
             onAdd={addItem}
             onRemove={removeItem}
-            onCheckout={handleCheckout}
+            onCheckout={() => setShowPayment(true)}
             onClear={clearCart}
           />
         </div>
@@ -216,7 +221,7 @@ export function Terminal() {
                 total={total}
                 onAdd={addItem}
                 onRemove={removeItem}
-                onCheckout={handleCheckout}
+                onCheckout={() => { setShowCartMobile(false); setShowPayment(true); }}
                 onClear={clearCart}
               />
             </div>
@@ -228,7 +233,7 @@ export function Terminal() {
         <PaymentModal
           items={items}
           total={total}
-          onClose={handlePaymentClose}
+          onClose={() => setShowPayment(false)}
         />
       )}
     </div>

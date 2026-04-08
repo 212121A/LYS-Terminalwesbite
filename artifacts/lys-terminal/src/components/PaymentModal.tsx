@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, CreditCard, Loader2, AlertCircle } from "lucide-react";
 import { CartItem } from "@/store/cart";
+import { useLang } from "@/i18n/LanguageContext";
 
 interface PaymentModalProps {
   items: CartItem[];
@@ -36,7 +37,7 @@ async function createCheckoutSession(items: CartItem[], method: PaymentMethod) {
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({})) as any;
-    throw new Error(err.error || "Zahlung konnte nicht gestartet werden");
+    throw new Error(err.error || "Payment could not be started");
   }
 
   const data = await response.json() as { url: string };
@@ -44,6 +45,7 @@ async function createCheckoutSession(items: CartItem[], method: PaymentMethod) {
 }
 
 export function PaymentModal({ items, total, onClose }: PaymentModalProps) {
+  const { tr } = useLang();
   const [selected, setSelected] = useState<PaymentMethod>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +67,7 @@ export function PaymentModal({ items, total, onClose }: PaymentModalProps) {
     const methodLabel =
       selected === "paypal" ? "PayPal"
       : selected === "applepay" ? "Apple Pay"
-      : "Karte / EC";
+      : tr.cardPayment;
 
     return (
       <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center text-center px-8">
@@ -73,10 +75,10 @@ export function PaymentModal({ items, total, onClose }: PaymentModalProps) {
           <Loader2 size={38} className="text-primary animate-spin" strokeWidth={1.5} />
         </div>
         <h2 className="font-serif text-3xl font-semibold text-foreground mb-3">
-          Weiterleitung zu {methodLabel}…
+          {tr.redirectingTo(methodLabel)}
         </h2>
         <p className="text-muted-foreground text-[15px]">
-          Sie werden zum sicheren Zahlungsformular weitergeleitet.
+          {tr.redirectingSubtitle}
         </p>
       </div>
     );
@@ -90,8 +92,8 @@ export function PaymentModal({ items, total, onClose }: PaymentModalProps) {
       >
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-border">
           <div>
-            <h2 className="font-serif text-[24px] font-semibold text-foreground">Zahlungsart</h2>
-            <p className="text-muted-foreground text-[13px] mt-0.5">Wählen Sie Ihre bevorzugte Zahlungsart</p>
+            <h2 className="font-serif text-[24px] font-semibold text-foreground">{tr.paymentTitle}</h2>
+            <p className="text-muted-foreground text-[13px] mt-0.5">{tr.paymentSubtitle}</p>
           </div>
           <button
             data-testid="button-close-payment"
@@ -104,7 +106,7 @@ export function PaymentModal({ items, total, onClose }: PaymentModalProps) {
 
         <div className="px-6 pt-4 pb-2">
           <div className="flex items-center justify-between py-3 px-4 bg-muted/50 rounded-xl mb-5">
-            <span className="text-[15px] text-muted-foreground font-medium">Gesamtbetrag</span>
+            <span className="text-[15px] text-muted-foreground font-medium">{tr.totalAmount}</span>
             <span
               data-testid="text-payment-total"
               className="text-[22px] font-semibold text-foreground tabular-nums"
@@ -138,10 +140,10 @@ export function PaymentModal({ items, total, onClose }: PaymentModalProps) {
                 </div>
                 <div className="flex items-center gap-2">
                   <CreditCard size={20} className="text-foreground" strokeWidth={1.5} />
-                  <span className="text-[15px] font-semibold text-foreground">EC-Karte / Kreditkarte</span>
+                  <span className="text-[14px] font-semibold text-foreground">{tr.cardPayment}</span>
                 </div>
               </div>
-              <div className="flex gap-1.5">
+              <div className="flex gap-1.5 shrink-0">
                 <div className="w-8 h-5 bg-blue-600 rounded text-white text-[8px] font-bold flex items-center justify-center">VISA</div>
                 <div className="w-8 h-5 bg-red-500 rounded text-white text-[7px] font-bold flex items-center justify-center leading-tight">MC</div>
               </div>
@@ -166,7 +168,7 @@ export function PaymentModal({ items, total, onClose }: PaymentModalProps) {
                   <span className="text-[#003087]">Pay</span><span className="text-[#009cde]">Pal</span>
                 </span>
               </div>
-              <span className="text-[13px] text-muted-foreground">Online-Zahlung</span>
+              <span className="text-[13px] text-muted-foreground">{tr.onlinePayment}</span>
             </button>
 
             <button
@@ -186,7 +188,7 @@ export function PaymentModal({ items, total, onClose }: PaymentModalProps) {
                 </div>
                 <span className="text-[17px] font-semibold text-foreground tracking-tight"> Pay</span>
               </div>
-              <span className="text-[13px] text-muted-foreground">NFC / iPhone</span>
+              <span className="text-[13px] text-muted-foreground">{tr.nfcPayment}</span>
             </button>
           </div>
 
@@ -201,12 +203,12 @@ export function PaymentModal({ items, total, onClose }: PaymentModalProps) {
             }`}
           >
             {selected
-              ? `Sicher zahlen · ${formatPrice(total)}`
-              : "Zahlungsart auswählen"}
+              ? tr.paySecurely(formatPrice(total))
+              : tr.selectPaymentMethod}
           </button>
 
           <p className="text-center text-[11px] text-muted-foreground pb-4">
-            Verschlüsselte Zahlung via Stripe · Ihre Daten sind sicher
+            {tr.encryptedPayment}
           </p>
         </div>
       </div>

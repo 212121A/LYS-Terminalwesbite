@@ -1,5 +1,6 @@
 import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
 import { CartItem } from "@/store/cart";
+import { useLang } from "@/i18n/LanguageContext";
 
 interface CartPanelProps {
   items: CartItem[];
@@ -15,12 +16,14 @@ function formatPrice(price: number) {
 }
 
 export function CartPanel({ items, total, onRemove, onAdd, onCheckout, onClear }: CartPanelProps) {
+  const { tr } = useLang();
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <div className="flex items-center gap-2">
           <ShoppingCart size={18} className="text-foreground" strokeWidth={1.8} />
-          <span className="font-medium text-[16px] text-foreground">Warenkorb</span>
+          <span className="font-medium text-[16px] text-foreground">{tr.cart}</span>
         </div>
         {items.length > 0 && (
           <button
@@ -39,8 +42,8 @@ export function CartPanel({ items, total, onRemove, onAdd, onCheckout, onClear }
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
               <ShoppingCart size={28} className="text-muted-foreground" strokeWidth={1.5} />
             </div>
-            <p className="text-foreground font-medium text-[15px] mb-1">Noch nichts im Warenkorb</p>
-            <p className="text-muted-foreground text-[13px]">Wählen Sie Gerichte aus</p>
+            <p className="text-foreground font-medium text-[15px] mb-1">{tr.emptyCartTitle}</p>
+            <p className="text-muted-foreground text-[13px]">{tr.emptyCartSubtitle}</p>
           </div>
         ) : (
           <div className="px-4 py-3 space-y-2">
@@ -53,7 +56,7 @@ export function CartPanel({ items, total, onRemove, onAdd, onCheckout, onClear }
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-[14px] font-medium text-foreground leading-snug">{item.name}</p>
-                    <p className="text-[13px] text-muted-foreground mt-0.5">{formatPrice(item.price)} / Stk.</p>
+                    <p className="text-[13px] text-muted-foreground mt-0.5">{formatPrice(item.price)} {tr.perPiece}</p>
                   </div>
                   <p className="text-[14px] font-semibold text-foreground tabular-nums shrink-0">
                     {formatPrice(item.price * item.quantity)}
@@ -90,7 +93,7 @@ export function CartPanel({ items, total, onRemove, onAdd, onCheckout, onClear }
       {items.length > 0 && (
         <div className="px-4 pb-4 pt-3 border-t border-border">
           <div className="flex items-center justify-between mb-4 px-1">
-            <span className="text-[15px] font-medium text-foreground">Gesamt</span>
+            <span className="text-[15px] font-medium text-foreground">{tr.total}</span>
             <span
               data-testid="text-cart-total"
               className="text-[20px] font-semibold text-foreground tabular-nums"
@@ -103,7 +106,7 @@ export function CartPanel({ items, total, onRemove, onAdd, onCheckout, onClear }
             onClick={onCheckout}
             className="w-full h-14 rounded-xl bg-primary text-primary-foreground text-[16px] font-semibold active:scale-[0.98] transition-all duration-100 shadow-md flex items-center justify-center gap-2"
           >
-            Jetzt bestellen
+            {tr.placeOrder}
           </button>
         </div>
       )}
