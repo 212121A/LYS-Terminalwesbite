@@ -4,12 +4,13 @@ import { useCart } from "@/store/cart";
 import { MenuItemCard } from "@/components/MenuItemCard";
 import { CartPanel } from "@/components/CartPanel";
 import { CategoryNav } from "@/components/CategoryNav";
+import { PaymentModal } from "@/components/PaymentModal";
 import { ShoppingCart } from "lucide-react";
 
 export function Terminal() {
   const { items, addItem, removeItem, clearCart, total, itemCount } = useCart();
   const [activeCategory, setActiveCategory] = useState(menuData[0].id);
-  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
   const [showCartMobile, setShowCartMobile] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -19,13 +20,18 @@ export function Terminal() {
     return item ? item.quantity : 0;
   };
 
-  const handleOrder = () => {
-    setOrderPlaced(true);
-    setTimeout(() => {
-      setOrderPlaced(false);
-      clearCart();
-      setShowCartMobile(false);
-    }, 4000);
+  const handleCheckout = () => {
+    setShowPayment(true);
+  };
+
+  const handlePaymentConfirm = () => {
+    clearCart();
+    setShowPayment(false);
+    setShowCartMobile(false);
+  };
+
+  const handlePaymentClose = () => {
+    setShowPayment(false);
   };
 
   const handleCategorySelect = (categoryId: string) => {
@@ -151,9 +157,8 @@ export function Terminal() {
             total={total}
             onAdd={addItem}
             onRemove={removeItem}
-            onOrder={handleOrder}
+            onCheckout={handleCheckout}
             onClear={clearCart}
-            orderPlaced={orderPlaced}
           />
         </div>
       </div>
@@ -174,13 +179,20 @@ export function Terminal() {
                 total={total}
                 onAdd={addItem}
                 onRemove={removeItem}
-                onOrder={handleOrder}
+                onCheckout={handleCheckout}
                 onClear={clearCart}
-                orderPlaced={orderPlaced}
               />
             </div>
           </div>
         </div>
+      )}
+
+      {showPayment && (
+        <PaymentModal
+          total={total}
+          onClose={handlePaymentClose}
+          onConfirm={handlePaymentConfirm}
+        />
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-import { ShoppingCart, Trash2, Plus, Minus, CheckCircle } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
 import { CartItem } from "@/store/cart";
 
 interface CartPanelProps {
@@ -6,30 +6,15 @@ interface CartPanelProps {
   total: number;
   onRemove: (cartId: string) => void;
   onAdd: (itemId: string, name: string, price: number, sizeLabel?: string) => void;
-  onOrder: () => void;
+  onCheckout: () => void;
   onClear: () => void;
-  orderPlaced: boolean;
 }
 
 function formatPrice(price: number) {
   return price.toFixed(2).replace(".", ",") + " €";
 }
 
-export function CartPanel({ items, total, onRemove, onAdd, onOrder, onClear, orderPlaced }: CartPanelProps) {
-  if (orderPlaced) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full py-16 text-center px-4">
-        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-          <CheckCircle size={42} className="text-primary" strokeWidth={1.5} />
-        </div>
-        <h2 className="font-serif text-3xl font-semibold text-foreground mb-3">Bestellung eingegangen!</h2>
-        <p className="text-muted-foreground text-[15px] leading-relaxed">
-          Ihre Bestellung wird vorbereitet.<br />Bitte warten Sie an der Kasse.
-        </p>
-      </div>
-    );
-  }
-
+export function CartPanel({ items, total, onRemove, onAdd, onCheckout, onClear }: CartPanelProps) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
@@ -115,7 +100,7 @@ export function CartPanel({ items, total, onRemove, onAdd, onOrder, onClear, ord
           </div>
           <button
             data-testid="button-place-order"
-            onClick={onOrder}
+            onClick={onCheckout}
             className="w-full h-14 rounded-xl bg-primary text-primary-foreground text-[16px] font-semibold active:scale-[0.98] transition-all duration-100 shadow-md flex items-center justify-center gap-2"
           >
             Jetzt bestellen
