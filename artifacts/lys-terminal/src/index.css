@@ -74,45 +74,45 @@
   --elevate-1: rgba(255,240,220, .04);
   --elevate-2: rgba(255,240,220, .08);
 
-  /* LYS inverted — dark brown background, beige buttons */
-  --background: 25 32% 26%;
-  --foreground: 25 35% 24%;
+  /* LYS medium warm taupe background, beige buttons */
+  --background: 33 20% 60%;
+  --foreground: 25 35% 22%;
 
-  --border: 25 22% 36%;
-  --input: 25 22% 36%;
-  --ring: 37 30% 72%;
+  --border: 33 15% 52%;
+  --input: 33 15% 52%;
+  --ring: 37 30% 82%;
 
   --card: 37 28% 87%;
   --card-foreground: 25 35% 22%;
   --card-border: 35 20% 76%;
 
-  --popover: 26 28% 32%;
-  --popover-foreground: 37 30% 90%;
-  --popover-border: 25 20% 38%;
+  --popover: 37 28% 87%;
+  --popover-foreground: 25 35% 22%;
+  --popover-border: 35 20% 76%;
 
   --primary: 37 28% 87%;
   --primary-foreground: 25 35% 22%;
 
-  --secondary: 25 24% 34%;
-  --secondary-foreground: 37 25% 82%;
+  --secondary: 33 16% 54%;
+  --secondary-foreground: 25 30% 25%;
 
-  --muted: 25 22% 31%;
-  --muted-foreground: 35 16% 60%;
+  --muted: 33 17% 56%;
+  --muted-foreground: 33 12% 38%;
 
-  --accent: 26 22% 36%;
-  --accent-foreground: 37 28% 88%;
+  --accent: 33 18% 57%;
+  --accent-foreground: 25 30% 25%;
 
   --destructive: 0 65% 52%;
   --destructive-foreground: 0 0% 100%;
 
-  --sidebar: 25 30% 24%;
-  --sidebar-foreground: 37 30% 90%;
-  --sidebar-border: 25 20% 34%;
+  --sidebar: 33 19% 57%;
+  --sidebar-foreground: 25 35% 22%;
+  --sidebar-border: 33 14% 50%;
   --sidebar-primary: 37 28% 87%;
   --sidebar-primary-foreground: 25 35% 22%;
-  --sidebar-accent: 26 22% 36%;
-  --sidebar-accent-foreground: 37 28% 88%;
-  --sidebar-ring: 37 30% 72%;
+  --sidebar-accent: 33 18% 57%;
+  --sidebar-accent-foreground: 25 30% 25%;
+  --sidebar-ring: 37 30% 82%;
 
   --chart-1: 25 35% 35%;
   --chart-2: 35 40% 50%;
