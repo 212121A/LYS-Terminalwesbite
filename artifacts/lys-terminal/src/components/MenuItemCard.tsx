@@ -21,7 +21,7 @@ export function MenuItemCard({ item, quantityInCart, onAdd, onRemove }: MenuItem
       >
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[11px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
+            <span className="text-[11px] font-medium text-foreground/60 border border-foreground/20 bg-foreground/5 px-1.5 py-0.5 rounded font-mono">
               {item.number}
             </span>
             {item.spicy && <Flame size={14} className="text-orange-500" />}
@@ -92,7 +92,7 @@ export function MenuItemCard({ item, quantityInCart, onAdd, onRemove }: MenuItem
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-[11px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
+          <span className="text-[11px] font-medium text-foreground/60 border border-foreground/20 bg-foreground/5 px-1.5 py-0.5 rounded font-mono">
             {item.number}
           </span>
           {item.spicy && <Flame size={14} className="text-orange-500" />}
