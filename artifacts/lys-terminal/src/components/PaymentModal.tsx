@@ -1,121 +1,71 @@
 import { useState } from "react";
-import { X, CreditCard, Loader2, CheckCircle } from "lucide-react";
+import { X, CreditCard, Loader2, AlertCircle } from "lucide-react";
+import { CartItem } from "@/store/cart";
 
 interface PaymentModalProps {
+  items: CartItem[];
   total: number;
   onClose: () => void;
-  onConfirm: () => void;
 }
 
-type PaymentMethod = "paypal" | "applepay" | "ec" | null;
-type PaymentState = "select" | "processing" | "done";
+type PaymentMethod = "card" | "paypal" | "applepay" | null;
 
 function formatPrice(price: number) {
   return price.toFixed(2).replace(".", ",") + " €";
 }
 
-function PayPalLogo() {
-  return (
-    <svg viewBox="0 0 100 28" className="h-7 w-auto" aria-label="PayPal">
-      <text
-        x="0"
-        y="22"
-        fontFamily="Arial, sans-serif"
-        fontWeight="bold"
-        fontSize="22"
-        fill="#003087"
-      >
-        Pay
-      </text>
-      <text
-        x="40"
-        y="22"
-        fontFamily="Arial, sans-serif"
-        fontWeight="bold"
-        fontSize="22"
-        fill="#009cde"
-      >
-        Pal
-      </text>
-    </svg>
-  );
-}
+async function createCheckoutSession(items: CartItem[], method: PaymentMethod) {
+  const baseUrl = window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, "");
 
-function ApplePayLogo() {
-  return (
-    <svg viewBox="0 0 80 24" className="h-7 w-auto" aria-label="Apple Pay">
-      <text
-        x="0"
-        y="20"
-        fontFamily="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
-        fontWeight="600"
-        fontSize="18"
-        fill="currentColor"
-        letterSpacing="-0.5"
-      >
-        &#xf8ff; Pay
-      </text>
-    </svg>
-  );
-}
+  const lineItems = items.map((item) => ({
+    name: item.name,
+    price: item.price,
+    quantity: item.quantity,
+  }));
 
-function ECCardLogo() {
-  return (
-    <svg viewBox="0 0 48 32" className="h-8 w-auto" aria-label="EC Karte">
-      <rect width="48" height="32" rx="4" fill="#1a1a2e" />
-      <text
-        x="7"
-        y="22"
-        fontFamily="Arial, sans-serif"
-        fontWeight="bold"
-        fontSize="16"
-        fill="#e8c547"
-      >
-        ec
-      </text>
-    </svg>
-  );
-}
+  const response = await fetch("/api/checkout/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      items: lineItems,
+      successUrl: `${baseUrl}/?payment=success`,
+      cancelUrl: `${baseUrl}/?payment=cancel`,
+      paymentMethod: method,
+    }),
+  });
 
-export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
-  const [selected, setSelected] = useState<PaymentMethod>(null);
-  const [state, setState] = useState<PaymentState>("select");
-
-  const handleSelect = (method: PaymentMethod) => {
-    setSelected(method);
-  };
-
-  const handlePay = () => {
-    if (!selected) return;
-    setState("processing");
-    setTimeout(() => {
-      setState("done");
-      setTimeout(() => {
-        onConfirm();
-      }, 2000);
-    }, 2500);
-  };
-
-  if (state === "done") {
-    return (
-      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center text-center px-8">
-        <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-8 animate-in zoom-in duration-300">
-          <CheckCircle size={52} className="text-primary" strokeWidth={1.5} />
-        </div>
-        <h2 className="font-serif text-4xl font-semibold text-foreground mb-3">Zahlung erfolgreich!</h2>
-        <p className="text-muted-foreground text-[16px] leading-relaxed mb-2">
-          Ihre Bestellung wird jetzt zubereitet.
-        </p>
-        <p className="text-muted-foreground text-[14px]">Bitte warten Sie an der Kasse.</p>
-      </div>
-    );
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({})) as any;
+    throw new Error(err.error || "Zahlung konnte nicht gestartet werden");
   }
 
-  if (state === "processing") {
+  const data = await response.json() as { url: string };
+  return data.url;
+}
+
+export function PaymentModal({ items, total, onClose }: PaymentModalProps) {
+  const [selected, setSelected] = useState<PaymentMethod>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handlePay = async () => {
+    if (!selected) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const url = await createCheckoutSession(items, selected);
+      window.location.href = url;
+    } catch (err: any) {
+      setError(err.message || "Ein Fehler ist aufgetreten");
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
     const methodLabel =
       selected === "paypal" ? "PayPal"
       : selected === "applepay" ? "Apple Pay"
-      : "EC-Karte";
+      : "Karte / EC";
 
     return (
       <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center text-center px-8">
@@ -123,10 +73,10 @@ export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
           <Loader2 size={38} className="text-primary animate-spin" strokeWidth={1.5} />
         </div>
         <h2 className="font-serif text-3xl font-semibold text-foreground mb-3">
-          Zahlung wird verarbeitet…
+          Weiterleitung zu {methodLabel}…
         </h2>
         <p className="text-muted-foreground text-[15px]">
-          Bitte folgen Sie den Anweisungen am {methodLabel}-Terminal.
+          Sie werden zum sicheren Zahlungsformular weitergeleitet.
         </p>
       </div>
     );
@@ -163,10 +113,43 @@ export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
             </span>
           </div>
 
+          {error && (
+            <div className="flex items-center gap-2 px-4 py-3 bg-destructive/10 border border-destructive/20 rounded-xl mb-4 text-destructive text-[13px]">
+              <AlertCircle size={16} />
+              <span>{error}</span>
+            </div>
+          )}
+
           <div className="space-y-3 mb-6">
             <button
+              data-testid="button-pay-card"
+              onClick={() => setSelected("card")}
+              className={`w-full h-16 rounded-xl border-2 flex items-center justify-between px-5 transition-all duration-150 active:scale-[0.98] ${
+                selected === "card"
+                  ? "border-primary bg-primary/5"
+                  : "border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/40"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                  selected === "card" ? "border-primary" : "border-muted-foreground/40"
+                }`}>
+                  {selected === "card" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                </div>
+                <div className="flex items-center gap-2">
+                  <CreditCard size={20} className="text-foreground" strokeWidth={1.5} />
+                  <span className="text-[15px] font-semibold text-foreground">EC-Karte / Kreditkarte</span>
+                </div>
+              </div>
+              <div className="flex gap-1.5">
+                <div className="w-8 h-5 bg-blue-600 rounded text-white text-[8px] font-bold flex items-center justify-center">VISA</div>
+                <div className="w-8 h-5 bg-red-500 rounded text-white text-[7px] font-bold flex items-center justify-center leading-tight">MC</div>
+              </div>
+            </button>
+
+            <button
               data-testid="button-pay-paypal"
-              onClick={() => handleSelect("paypal")}
+              onClick={() => setSelected("paypal")}
               className={`w-full h-16 rounded-xl border-2 flex items-center justify-between px-5 transition-all duration-150 active:scale-[0.98] ${
                 selected === "paypal"
                   ? "border-primary bg-primary/5"
@@ -177,18 +160,18 @@ export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                   selected === "paypal" ? "border-primary" : "border-muted-foreground/40"
                 }`}>
-                  {selected === "paypal" && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                  )}
+                  {selected === "paypal" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                 </div>
-                <PayPalLogo />
+                <span className="text-[19px] font-bold tracking-tight">
+                  <span className="text-[#003087]">Pay</span><span className="text-[#009cde]">Pal</span>
+                </span>
               </div>
               <span className="text-[13px] text-muted-foreground">Online-Zahlung</span>
             </button>
 
             <button
               data-testid="button-pay-applepay"
-              onClick={() => handleSelect("applepay")}
+              onClick={() => setSelected("applepay")}
               className={`w-full h-16 rounded-xl border-2 flex items-center justify-between px-5 transition-all duration-150 active:scale-[0.98] ${
                 selected === "applepay"
                   ? "border-primary bg-primary/5"
@@ -199,36 +182,11 @@ export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                   selected === "applepay" ? "border-primary" : "border-muted-foreground/40"
                 }`}>
-                  {selected === "applepay" && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                  )}
+                  {selected === "applepay" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                 </div>
-                <span className="text-[17px] font-semibold text-foreground tracking-tight">Apple Pay</span>
+                <span className="text-[17px] font-semibold text-foreground tracking-tight"> Pay</span>
               </div>
               <span className="text-[13px] text-muted-foreground">NFC / iPhone</span>
-            </button>
-
-            <button
-              data-testid="button-pay-ec"
-              onClick={() => handleSelect("ec")}
-              className={`w-full h-16 rounded-xl border-2 flex items-center justify-between px-5 transition-all duration-150 active:scale-[0.98] ${
-                selected === "ec"
-                  ? "border-primary bg-primary/5"
-                  : "border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/40"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                  selected === "ec" ? "border-primary" : "border-muted-foreground/40"
-                }`}>
-                  {selected === "ec" && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                  )}
-                </div>
-                <ECCardLogo />
-                <span className="text-[15px] font-medium text-foreground">EC-Karte</span>
-              </div>
-              <CreditCard size={18} className="text-muted-foreground" strokeWidth={1.5} />
             </button>
           </div>
 
@@ -243,9 +201,13 @@ export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
             }`}
           >
             {selected
-              ? `Jetzt zahlen · ${formatPrice(total)}`
+              ? `Sicher zahlen · ${formatPrice(total)}`
               : "Zahlungsart auswählen"}
           </button>
+
+          <p className="text-center text-[11px] text-muted-foreground pb-4">
+            Verschlüsselte Zahlung via Stripe · Ihre Daten sind sicher
+          </p>
         </div>
       </div>
     </div>

@@ -5,15 +5,35 @@ import { MenuItemCard } from "@/components/MenuItemCard";
 import { CartPanel } from "@/components/CartPanel";
 import { CategoryNav } from "@/components/CategoryNav";
 import { PaymentModal } from "@/components/PaymentModal";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, CheckCircle, XCircle } from "lucide-react";
+
+function useQueryParam(key: string) {
+  return new URLSearchParams(window.location.search).get(key);
+}
 
 export function Terminal() {
   const { items, addItem, removeItem, clearCart, total, itemCount } = useCart();
   const [activeCategory, setActiveCategory] = useState(menuData[0].id);
   const [showPayment, setShowPayment] = useState(false);
   const [showCartMobile, setShowCartMobile] = useState(false);
+  const [paymentBanner, setPaymentBanner] = useState<"success" | "cancel" | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const paymentParam = useQueryParam("payment");
+
+  useEffect(() => {
+    if (paymentParam === "success") {
+      setPaymentBanner("success");
+      clearCart();
+      window.history.replaceState({}, "", window.location.pathname);
+      setTimeout(() => setPaymentBanner(null), 5000);
+    } else if (paymentParam === "cancel") {
+      setPaymentBanner("cancel");
+      window.history.replaceState({}, "", window.location.pathname);
+      setTimeout(() => setPaymentBanner(null), 4000);
+    }
+  }, []);
 
   const quantityInCart = (cartId: string) => {
     const item = items.find((i) => i.id === cartId);
@@ -22,12 +42,6 @@ export function Terminal() {
 
   const handleCheckout = () => {
     setShowPayment(true);
-  };
-
-  const handlePaymentConfirm = () => {
-    clearCart();
-    setShowPayment(false);
-    setShowCartMobile(false);
   };
 
   const handlePaymentClose = () => {
@@ -67,6 +81,29 @@ export function Terminal() {
 
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
+      {paymentBanner && (
+        <div
+          className={`flex items-center gap-3 px-6 py-3 text-[14px] font-medium animate-in slide-in-from-top duration-300 ${
+            paymentBanner === "success"
+              ? "bg-primary text-primary-foreground"
+              : "bg-destructive text-destructive-foreground"
+          }`}
+          data-testid="banner-payment-status"
+        >
+          {paymentBanner === "success" ? (
+            <>
+              <CheckCircle size={18} />
+              <span>Zahlung erfolgreich! Ihre Bestellung wird zubereitet.</span>
+            </>
+          ) : (
+            <>
+              <XCircle size={18} />
+              <span>Zahlung abgebrochen. Sie können Ihre Bestellung erneut aufgeben.</span>
+            </>
+          )}
+        </div>
+      )}
+
       <header className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0 bg-background">
         <div>
           <div className="font-serif text-[28px] font-semibold tracking-tight text-foreground leading-none">LYS</div>
@@ -189,9 +226,9 @@ export function Terminal() {
 
       {showPayment && (
         <PaymentModal
+          items={items}
           total={total}
           onClose={handlePaymentClose}
-          onConfirm={handlePaymentConfirm}
         />
       )}
     </div>
