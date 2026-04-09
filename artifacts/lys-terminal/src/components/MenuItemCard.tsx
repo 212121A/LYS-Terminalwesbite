@@ -1,5 +1,6 @@
 import { Plus, Minus, Flame } from "lucide-react";
 import { MenuItem } from "@/data/menu";
+import { useLang } from "@/i18n/LanguageContext";
 
 interface MenuItemCardProps {
   item: MenuItem;
@@ -13,6 +14,17 @@ function formatPrice(price: number) {
 }
 
 export function MenuItemCard({ item, quantityInCart, onAdd, onRemove }: MenuItemCardProps) {
+  const { tr } = useLang();
+
+  const displayName =
+    item.dishType && tr.dishNames[item.dishType] ? tr.dishNames[item.dishType] : item.name;
+
+  const getSizeLabel = (label: string) => {
+    if (label === "Klein") return tr.sizeSmall;
+    if (label === "Groß") return tr.sizeLarge;
+    return label;
+  };
+
   if (item.sizeOptions && item.sizeOptions.length > 0) {
     return (
       <div
@@ -26,7 +38,7 @@ export function MenuItemCard({ item, quantityInCart, onAdd, onRemove }: MenuItem
             </span>
             {item.spicy && <Flame size={14} className="text-orange-500" />}
           </div>
-          <h3 className="font-medium text-foreground text-[15px] leading-snug">{item.name}</h3>
+          <h3 className="font-medium text-foreground text-[15px] leading-snug">{displayName}</h3>
           {item.description && (
             <p className="text-muted-foreground text-[13px] mt-1 leading-relaxed">{item.description}</p>
           )}
@@ -35,9 +47,10 @@ export function MenuItemCard({ item, quantityInCart, onAdd, onRemove }: MenuItem
           {item.sizeOptions.map((size) => {
             const cartId = `${item.id}-${size.label}`;
             const qty = quantityInCart(cartId);
+            const translatedLabel = getSizeLabel(size.label);
             return (
               <div key={size.label} className="flex items-center justify-between">
-                <span className="text-[13px] text-muted-foreground">{size.label}</span>
+                <span className="text-[13px] text-muted-foreground">{translatedLabel}</span>
                 <div className="flex items-center gap-3">
                   <span className="text-[15px] font-medium text-foreground tabular-nums">
                     {formatPrice(size.price)}
@@ -45,7 +58,7 @@ export function MenuItemCard({ item, quantityInCart, onAdd, onRemove }: MenuItem
                   {qty === 0 ? (
                     <button
                       data-testid={`button-add-${item.id}-${size.label}`}
-                      onClick={() => onAdd(item.id, `${item.name} (${size.label})`, size.price, size.label)}
+                      onClick={() => onAdd(item.id, `${displayName} (${translatedLabel})`, size.price, size.label)}
                       className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center active:scale-95 transition-transform duration-100 shadow-sm"
                     >
                       <Plus size={18} strokeWidth={2.5} />
@@ -67,7 +80,7 @@ export function MenuItemCard({ item, quantityInCart, onAdd, onRemove }: MenuItem
                       </span>
                       <button
                         data-testid={`button-add-more-${item.id}-${size.label}`}
-                        onClick={() => onAdd(item.id, `${item.name} (${size.label})`, size.price, size.label)}
+                        onClick={() => onAdd(item.id, `${displayName} (${translatedLabel})`, size.price, size.label)}
                         className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center active:scale-95 transition-transform duration-100 shadow-sm"
                       >
                         <Plus size={18} strokeWidth={2.5} />
@@ -97,7 +110,7 @@ export function MenuItemCard({ item, quantityInCart, onAdd, onRemove }: MenuItem
           </span>
           {item.spicy && <Flame size={14} className="text-orange-500" />}
         </div>
-        <h3 className="font-medium text-foreground text-[15px] leading-snug">{item.name}</h3>
+        <h3 className="font-medium text-foreground text-[15px] leading-snug">{displayName}</h3>
         {item.description && (
           <p className="text-muted-foreground text-[13px] mt-0.5">{item.description}</p>
         )}
@@ -111,7 +124,7 @@ export function MenuItemCard({ item, quantityInCart, onAdd, onRemove }: MenuItem
         {qty === 0 ? (
           <button
             data-testid={`button-add-${item.id}`}
-            onClick={() => onAdd(item.id, item.name, item.price)}
+            onClick={() => onAdd(item.id, displayName, item.price)}
             className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center active:scale-95 transition-transform duration-100 shadow-sm"
           >
             <Plus size={20} strokeWidth={2.5} />
@@ -133,7 +146,7 @@ export function MenuItemCard({ item, quantityInCart, onAdd, onRemove }: MenuItem
             </span>
             <button
               data-testid={`button-add-more-${item.id}`}
-              onClick={() => onAdd(item.id, item.name, item.price)}
+              onClick={() => onAdd(item.id, displayName, item.price)}
               className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center active:scale-95 transition-transform duration-100 shadow-sm"
             >
               <Plus size={20} strokeWidth={2.5} />
