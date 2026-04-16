@@ -1,0 +1,16 @@
+# Keep upload small (Vercel limit ~15k file entries)
+node_modules
+**/node_modules
+.git
+.vercel
+.env
+.env.*
+.cache
+**/.cache
+dist
+**/dist
+coverage
+*.tsbuildinfo
+.turbo
+.next
+pnpm-debug.log*
