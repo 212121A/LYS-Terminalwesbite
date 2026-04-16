@@ -1,3 +1,12 @@
+import { config as loadEnv } from "dotenv";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
+// Built output is dist/index.mjs — package .env, then repo-root .env (overrides)
+loadEnv({ path: resolve(__dirname, "../.env") });
+loadEnv({ path: resolve(__dirname, "../../../.env") });
+
 import app from "./app";
 import { logger } from "./lib/logger";
 
