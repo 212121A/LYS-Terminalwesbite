@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { type Request, type Response, Router } from 'express';
 import { getUncachableStripeClient, getStripePublishableKey } from '../stripeClient';
 
 const router = Router();
@@ -53,12 +53,14 @@ router.get('/stripe/status', (_req, res) => {
   });
 });
 
-router.post('/checkout/session', async (req, res) => {
+/** Gleicher Pfad wie LYS Website: POST /api/stripe/create-checkout-session */
+async function createCheckoutSessionHandler(req: Request, res: Response) {
   try {
-    const { items, successUrl, cancelUrl } = req.body as {
+    const { items, successUrl, cancelUrl, paymentMethod } = req.body as {
       items: Array<{ name: string; price: number; quantity: number }>;
       successUrl: string;
       cancelUrl: string;
+      paymentMethod?: string | null;
     };
 
     if (!items || items.length === 0) {
@@ -115,16 +117,16 @@ router.post('/checkout/session', async (req, res) => {
         payment_method_types: paymentMethodTypes as any,
       });
 
+    /** LYS Website: nur „card“ (Apple Pay / Wallet über Checkout). PayPal nur wenn Nutzer PayPal wählt. */
     let session;
-    try {
-      session = await createSession(['card', 'paypal']);
-    } catch (firstErr: any) {
-      // PayPal oft nicht im Stripe-Dashboard aktiviert → zweiter Versuch nur Karte (Apple Pay/Wallet über card)
+    if (paymentMethod === 'paypal') {
       try {
+        session = await createSession(['card', 'paypal']);
+      } catch {
         session = await createSession(['card']);
-      } catch (secondErr: any) {
-        throw secondErr;
       }
+    } else {
+      session = await createSession(['card']);
     }
 
     if (!session.url) {
@@ -171,6 +173,9 @@ router.post('/checkout/session', async (req, res) => {
       ...(type ? { stripeType: type } : {}),
     });
   }
-});
+}
+
+router.post('/checkout/session', createCheckoutSessionHandler);
+router.post('/stripe/create-checkout-session', createCheckoutSessionHandler);
 
 export default router;

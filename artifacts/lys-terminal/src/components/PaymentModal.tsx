@@ -36,6 +36,15 @@ function resolveApiUrl(path: string): string {
   return new URL(rel, `${window.location.origin}${base.endsWith("/") ? base : `${base}/`}`).href;
 }
 
+/** Wie LYS Website: optional absolute API-Root (VITE_API_BASE_URL), sonst gleiche Origin wie die App. */
+function stripeCreateCheckoutUrl(): string {
+  const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") ?? "";
+  if (apiBase) {
+    return `${apiBase}/api/stripe/create-checkout-session`;
+  }
+  return resolveApiUrl("/api/stripe/create-checkout-session");
+}
+
 /** Verhindert „endloses“ Laden, wenn API/Netzwerk nicht antwortet (z. B. langsamer Cold Start, blockierter In-App-Browser). */
 async function fetchWithTimeout(
   input: string,
@@ -126,8 +135,7 @@ function normalizePaymentError(raw: unknown): string {
 async function createCheckoutSession(items: CartItem[], method: PaymentMethod) {
   const baseUrl = window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, "");
 
-  /** Kein GET /api/stripe/status mehr: doppelter Roundtrip + oft langsamer erster Cold Start → 20s-Abbruch
-   *  vor Checkout. Fehlende Keys / Test-Live-Mismatch liefert POST /api/checkout/session als JSON. */
+  /** POST wie LYS Website: /api/stripe/create-checkout-session (Alias: /api/checkout/session). */
 
   const lineItems = items.map((item) => ({
     name: item.name,
@@ -136,7 +144,7 @@ async function createCheckoutSession(items: CartItem[], method: PaymentMethod) {
   }));
 
   const response = await fetchWithTimeout(
-    resolveApiUrl("/api/checkout/session"),
+    stripeCreateCheckoutUrl(),
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
