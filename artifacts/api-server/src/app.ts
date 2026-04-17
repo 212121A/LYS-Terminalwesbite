@@ -7,6 +7,8 @@ import { WebhookHandlers } from "./webhookHandlers";
 
 export function createApp(): Express {
   const app: Express = express();
+  /** Rate-Limit & Client-IP hinter Vercel-Proxy (wie üblich bei Serverless) */
+  app.set('trust proxy', 1);
 
   // Vercel Serverless: Anfrage kann ohne /api-Präfix ankommen (Express-Routen würden sonst 404 liefern)
   app.use((req, _res, next) => {

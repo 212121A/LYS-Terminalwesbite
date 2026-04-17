@@ -1,7 +1,17 @@
 import { type Request, type Response, Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { getUncachableStripeClient, getStripePublishableKey } from '../stripeClient';
 
 const router = Router();
+
+/** Wie LYS Website `artifacts/api-server/src/routes/stripe.ts` (checkoutLimiter) */
+const checkoutSessionLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Zu viele Anfragen. Bitte warte kurz.' },
+});
 
 function keyMode(prefix: 'sk' | 'pk', key: string | undefined): 'test' | 'live' | 'unknown' {
   if (!key?.trim()) return 'unknown';
@@ -22,6 +32,16 @@ router.get('/stripe/publishable-key', async (_req, res) => {
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
+});
+
+/** Wie LYS Website `GET /api/stripe/config` → `{ publishableKey }` oder 503 */
+router.get('/stripe/config', (_req, res) => {
+  const publishableKey =
+    process.env.STRIPE_PUBLISHABLE_KEY?.trim() || process.env.STRIPE_PUBLIC_KEY?.trim();
+  if (!publishableKey) {
+    return res.status(503).json({ error: 'Stripe not configured' });
+  }
+  return res.json({ publishableKey });
 });
 
 /** Diagnose: ob Vercel die Stripe-Env-Keys an die Serverless-Funktion durchreicht (ohne Geheimnisse). */
@@ -175,7 +195,7 @@ async function createCheckoutSessionHandler(req: Request, res: Response) {
   }
 }
 
-router.post('/checkout/session', createCheckoutSessionHandler);
-router.post('/stripe/create-checkout-session', createCheckoutSessionHandler);
+router.post('/checkout/session', checkoutSessionLimiter, createCheckoutSessionHandler);
+router.post('/stripe/create-checkout-session', checkoutSessionLimiter, createCheckoutSessionHandler);
 
 export default router;
