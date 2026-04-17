@@ -8,6 +8,20 @@ import { WebhookHandlers } from "./webhookHandlers";
 export function createApp(): Express {
   const app: Express = express();
 
+  // Vercel Serverless: Anfrage kann ohne /api-Präfix ankommen (Express-Routen würden sonst 404 liefern)
+  app.use((req, _res, next) => {
+    const fix = (full: string) => {
+      if (!full || full.startsWith("/api")) return full;
+      const [pathPart, query] = full.split("?");
+      const path = pathPart.startsWith("/") ? pathPart : `/${pathPart}`;
+      const withApi = `/api${path}`;
+      return query ? `${withApi}?${query}` : withApi;
+    };
+    req.url = fix(req.url ?? "");
+    req.originalUrl = fix(req.originalUrl ?? "");
+    next();
+  });
+
   app.use(
     pinoHttp({
       logger,
@@ -39,10 +53,10 @@ export function createApp(): Express {
       try {
         const sig = Array.isArray(signature) ? signature[0] : signature;
         await WebhookHandlers.processWebhook(req.body as Buffer, sig);
-        res.status(200).json({ received: true });
+        return res.status(200).json({ received: true });
       } catch (error: any) {
         logger.error({ err: error }, "Webhook error");
-        res.status(400).json({ error: "Webhook processing error" });
+        return res.status(400).json({ error: "Webhook processing error" });
       }
     },
   );

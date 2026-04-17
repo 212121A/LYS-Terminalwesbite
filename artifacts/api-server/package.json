@@ -20,8 +20,7 @@
     "pino": "^9",
     "pino-http": "^10",
     "serverless-http": "^4.0.0",
-    "stripe": "^20.0.0",
-    "stripe-replit-sync": "^1.0.0"
+    "stripe": "^20.0.0"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

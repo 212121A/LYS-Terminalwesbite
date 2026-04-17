@@ -2,9 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-// Defaults allow CI/Vercel builds without Replit env (dev: set PORT + BASE_PATH in shell or .env)
+// CI/Vercel: PORT/BASE_PATH optional; lokal: Defaults unten
 const rawPort = process.env.PORT ?? "5173";
 const port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) {
@@ -15,24 +14,14 @@ const basePath = process.env.BASE_PATH ?? "/";
 
 export default defineConfig({
   base: basePath,
-  plugins: [
-    react(),
-    tailwindcss(),
-    runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer({
-              root: path.resolve(import.meta.dirname, ".."),
-            }),
-          ),
-          await import("@replit/vite-plugin-dev-banner").then((m) =>
-            m.devBanner(),
-          ),
-        ]
-      : []),
-  ],
+  define: {
+    __APP_BUILD_ID__: JSON.stringify(
+      process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ||
+        process.env.VERCEL_DEPLOYMENT_ID?.slice(0, 12) ||
+        `local-${Date.now().toString(36)}`,
+    ),
+  },
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
@@ -49,7 +38,7 @@ export default defineConfig({
     port,
     host: "0.0.0.0",
     allowedHosts: true,
-    // Lokal: /api → API-Server (auf Replit übernimmt das der Router)
+    // Lokal: /api → API-Server
     proxy: {
       "/api": {
         target: process.env.VITE_API_PROXY_TARGET ?? "http://127.0.0.1:8080",

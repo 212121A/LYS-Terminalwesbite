@@ -54,3 +54,6 @@ Thumbs.db
 
 # Vercel
 .vercel
+
+# Von build:vercel erzeugt (Vercel-Static-Root)
+/public
