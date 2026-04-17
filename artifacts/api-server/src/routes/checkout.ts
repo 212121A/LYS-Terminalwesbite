@@ -72,7 +72,14 @@ router.post('/checkout/session', async (req, res) => {
     );
     const sm = keyMode('sk', sk);
     const pm = keyMode('pk', pk);
-    if (sk && pk && sm !== 'unknown' && pm !== 'unknown' && sm !== pm) {
+    if (!sk || !pk) {
+      return res.status(500).json({
+        error:
+          'Stripe-Keys fehlen auf dem Server. In Vercel: Project → Settings → Environment Variables → STRIPE_SECRET_KEY und STRIPE_PUBLISHABLE_KEY setzen, dann Redeploy.',
+        code: 'stripe_keys_missing',
+      });
+    }
+    if (sm !== 'unknown' && pm !== 'unknown' && sm !== pm) {
       return res.status(500).json({
         error:
           'Stripe: Secret-Key und Publishable-Key passen nicht zusammen (Test vs. Live). Beide aus demselben Modus im Dashboard kopieren (Test: sk_test_… + pk_test_…, Live: sk_live_… + pk_live_…).',

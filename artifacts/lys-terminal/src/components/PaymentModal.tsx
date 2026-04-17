@@ -126,38 +126,8 @@ function normalizePaymentError(raw: unknown): string {
 async function createCheckoutSession(items: CartItem[], method: PaymentMethod) {
   const baseUrl = window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, "");
 
-  const statusRes = await fetchWithTimeout(resolveApiUrl("/api/stripe/status"), undefined, 20_000);
-  const statusText = await statusRes.text();
-  type StripeStatusResponse = {
-    stripeKeysPresent?: boolean;
-    modesMatch?: boolean;
-  };
-  let stripeStatus: StripeStatusResponse | null = null;
-  try {
-    stripeStatus = JSON.parse(statusText) as StripeStatusResponse;
-  } catch {
-    /* kein JSON */
-  }
-  if (!statusRes.ok) {
-    throw new Error(
-      `API nicht erreichbar (HTTP ${statusRes.status}). Prüfen: gleiche Domain wie die Seite, /api/healthz und Deploy (api/index.mjs + Rewrite in vercel.json).`,
-    );
-  }
-  if (!stripeStatus || typeof stripeStatus.stripeKeysPresent !== "boolean") {
-    throw new Error(
-      "API /api/stripe/status liefert kein gültiges JSON (z. B. HTML-Login durch Vercel Deployment Protection, oder falsche Domain). Im Vercel-Projekt: Production-Deployment ohne Schutz testen oder öffentliche Production-Domain nutzen.",
-    );
-  }
-  if (stripeStatus.stripeKeysPresent === false) {
-    throw new Error(
-      "Stripe-Keys fehlen auf dem Server. In Vercel: Project → Settings → Environment Variables → STRIPE_SECRET_KEY und STRIPE_PUBLISHABLE_KEY setzen, dann Redeploy.",
-    );
-  }
-  if (stripeStatus?.stripeKeysPresent === true && stripeStatus?.modesMatch === false) {
-    throw new Error(
-      "Stripe: Secret-Key und Publishable-Key passen nicht zusammen (Test vs. Live). Beide Keys aus demselben Modus im Dashboard kopieren (entweder nur Test: sk_test_… + pk_test_… oder nur Live: sk_live_… + pk_live_…).",
-    );
-  }
+  /** Kein GET /api/stripe/status mehr: doppelter Roundtrip + oft langsamer erster Cold Start → 20s-Abbruch
+   *  vor Checkout. Fehlende Keys / Test-Live-Mismatch liefert POST /api/checkout/session als JSON. */
 
   const lineItems = items.map((item) => ({
     name: item.name,
@@ -177,7 +147,7 @@ async function createCheckoutSession(items: CartItem[], method: PaymentMethod) {
         paymentMethod: method,
       }),
     },
-    55_000,
+    65_000,
   );
 
   const raw = await response.text();
