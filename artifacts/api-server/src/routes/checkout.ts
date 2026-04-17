@@ -135,11 +135,22 @@ router.post('/checkout/session', async (req, res) => {
       err?.message ||
       (typeof err === 'string' ? err : 'Checkout fehlgeschlagen');
     if (typeof message === 'string') {
-      const m = message.replace(/\s+/g, ' ').trim();
+      const m = message
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .replace(/\u2019/g, "'")
+        .replace(/\s+/g, ' ')
+        .trim();
+      const compact = m.replace(/\W/g, '').toLowerCase();
+      const compactMatch =
+        compact.includes('paymentcouldnotbestarted') ||
+        compact.includes('thepaymentcouldnotbestarted') ||
+        compact.includes('paymentcouldntbestarted') ||
+        (compact.includes('couldnotbestarted') && compact.includes('payment'));
       if (
         /(?:the\s+)?payment\s+could\s+not\s+be\s+started/i.test(m) ||
         /payment\s+couldn['']?t\s+be\s+started/i.test(m) ||
-        (/could\s+not\s+be\s+started/i.test(m) && /payment/i.test(m))
+        (/could\s+not\s+be\s+started/i.test(m) && /payment/i.test(m)) ||
+        compactMatch
       ) {
         message =
           'Zahlung konnte nicht gestartet werden. Häufig: Test/Live-Keys gemischt, Zahlungsarten im Stripe-Dashboard nicht aktiviert, oder Konto noch eingeschränkt. Im Dashboard unter „Zahlungen“ → Entwicklerprotokolle prüfen.';

@@ -60,6 +60,20 @@ function extractErrorText(raw: unknown): string {
   }
 }
 
+/** Ohne Leerzeichen/Sonderzeichen — fängt Zero-Width, NBSP-ähnliche Trenner, „couldn’t“-Varianten ab. */
+function compactPaymentStartFailureMatch(s: string): boolean {
+  const compact = s
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\u2019/g, "'")
+    .replace(/\W/g, "")
+    .toLowerCase();
+  if (compact.includes("paymentcouldnotbestarted")) return true;
+  if (compact.includes("thepaymentcouldnotbestarted")) return true;
+  if (compact.includes("paymentcouldntbestarted")) return true;
+  if (compact.includes("couldnotbestarted") && compact.includes("payment")) return true;
+  return false;
+}
+
 /** Englische Stripe/Browser-Meldungen → deutsche Hinweise (auch bei Sonderzeichen / altem Bundle). */
 function normalizePaymentError(raw: unknown): string {
   const msg = extractErrorText(raw);
@@ -73,7 +87,8 @@ function normalizePaymentError(raw: unknown): string {
   if (
     /(?:the\s+)?payment\s+could\s+not\s+be\s+started/i.test(m) ||
     /payment\s+couldn['']?t\s+be\s+started/i.test(m) ||
-    (/could\s+not\s+be\s+started/i.test(m) && /payment/i.test(m))
+    (/could\s+not\s+be\s+started/i.test(m) && /payment/i.test(m)) ||
+    compactPaymentStartFailureMatch(m)
   ) {
     return PAYMENT_START_FAILED_DE;
   }
