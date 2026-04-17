@@ -23,7 +23,10 @@ async function getCredentials() {
 
 export async function getUncachableStripeClient() {
   const { secretKey } = await getCredentials();
-  return new Stripe(secretKey);
+  return new Stripe(secretKey, {
+    timeout: 22_000,
+    maxNetworkRetries: 0,
+  });
 }
 
 export async function getStripePublishableKey() {

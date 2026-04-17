@@ -36,6 +36,31 @@ function resolveApiUrl(path: string): string {
   return new URL(rel, `${window.location.origin}${base.endsWith("/") ? base : `${base}/`}`).href;
 }
 
+/** Verhindert „endloses“ Laden, wenn API/Netzwerk nicht antwortet (z. B. langsamer Cold Start, blockierter In-App-Browser). */
+async function fetchWithTimeout(
+  input: string,
+  init: RequestInit | undefined,
+  timeoutMs: number,
+): Promise<Response> {
+  const ac = new AbortController();
+  const t = window.setTimeout(() => ac.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: ac.signal });
+  } catch (e: unknown) {
+    const aborted =
+      (e instanceof DOMException && e.name === "AbortError") ||
+      (e instanceof Error && e.name === "AbortError");
+    if (aborted) {
+      throw new Error(
+        `Zeitüberschreitung nach ${Math.round(timeoutMs / 1000)}s: Server oder Netzwerk antwortet nicht. Seite neu laden, andere Netzwerkverbindung testen; in Instagram/Facebook-In-App-Browser oft blockiert — Safari/Chrome öffnen.`,
+      );
+    }
+    throw e;
+  } finally {
+    window.clearTimeout(t);
+  }
+}
+
 const PAYMENT_START_FAILED_DE =
   "Zahlung konnte nicht gestartet werden. Prüfen: (1) STRIPE_SECRET_KEY und STRIPE_PUBLISHABLE_KEY in Vercel (Environment: Production), (2) nach Änderungen Redeploy, (3) Zahlungsarten im Stripe-Dashboard (Karte/PayPal) und Test-/Live-Keys nicht mischen. Danach Seite mit Strg+F5 neu laden.";
 
@@ -101,7 +126,7 @@ function normalizePaymentError(raw: unknown): string {
 async function createCheckoutSession(items: CartItem[], method: PaymentMethod) {
   const baseUrl = window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, "");
 
-  const statusRes = await fetch(resolveApiUrl("/api/stripe/status"));
+  const statusRes = await fetchWithTimeout(resolveApiUrl("/api/stripe/status"), undefined, 20_000);
   const statusText = await statusRes.text();
   type StripeStatusResponse = {
     stripeKeysPresent?: boolean;
@@ -140,16 +165,20 @@ async function createCheckoutSession(items: CartItem[], method: PaymentMethod) {
     quantity: item.quantity,
   }));
 
-  const response = await fetch(resolveApiUrl("/api/checkout/session"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      items: lineItems,
-      successUrl: `${baseUrl}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${baseUrl}/?payment=cancel`,
-      paymentMethod: method,
-    }),
-  });
+  const response = await fetchWithTimeout(
+    resolveApiUrl("/api/checkout/session"),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: lineItems,
+        successUrl: `${baseUrl}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${baseUrl}/?payment=cancel`,
+        paymentMethod: method,
+      }),
+    },
+    55_000,
+  );
 
   const raw = await response.text();
   let data: {
