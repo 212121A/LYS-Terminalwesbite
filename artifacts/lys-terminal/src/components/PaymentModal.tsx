@@ -138,6 +138,7 @@ async function createCheckoutSession(items: CartItem[], method: PaymentMethod) {
   /** POST wie LYS Website: /api/stripe/create-checkout-session (Alias: /api/checkout/session). */
 
   const lineItems = items.map((item) => ({
+    id: item.id,
     name: item.name,
     price: item.price,
     quantity: item.quantity,

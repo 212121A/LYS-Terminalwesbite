@@ -77,7 +77,7 @@ router.get('/stripe/status', (_req, res) => {
 async function createCheckoutSessionHandler(req: Request, res: Response) {
   try {
     const { items, successUrl, cancelUrl, paymentMethod } = req.body as {
-      items: Array<{ name: string; price: number; quantity: number }>;
+      items: Array<{ id?: string; name: string; price: number; quantity: number }>;
       successUrl: string;
       cancelUrl: string;
       paymentMethod?: string | null;
@@ -116,6 +116,7 @@ async function createCheckoutSessionHandler(req: Request, res: Response) {
         currency: 'eur',
         product_data: {
           name: item.name,
+          ...(item.id ? { metadata: { item_id: item.id } } : {}),
         },
         unit_amount: Math.round(item.price * 100),
       },
