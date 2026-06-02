@@ -141,9 +141,6 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced }: PaymentMo
         <h2 className="font-serif text-3xl font-semibold text-foreground mb-3">
           {tr.placeOrder}…
         </h2>
-        <p className="text-muted-foreground text-[15px]">
-          {tr.redirectingSubtitle}
-        </p>
       </div>
     );
   }
@@ -211,7 +208,7 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced }: PaymentMo
           {error && (
             <div className="flex items-center gap-2 px-4 py-3 bg-destructive/10 border border-destructive/20 rounded-xl mb-4 text-destructive text-[13px]">
               <AlertCircle size={16} />
-              <span>{tr.orderFailedTitle}: {error}</span>
+              <span>{error || tr.orderFailedTitle}</span>
             </div>
           )}
 
