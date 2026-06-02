@@ -234,6 +234,7 @@ export function Terminal() {
           items={items}
           total={total}
           onClose={() => setShowPayment(false)}
+          onOrderPlaced={() => clearCart()}
         />
       )}
     </div>
