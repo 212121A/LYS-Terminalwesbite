@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, CreditCard, Loader2, AlertCircle } from "lucide-react";
+import { X, CreditCard, Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { CartItem } from "@/store/cart";
 import { useLang } from "@/i18n/LanguageContext";
 
@@ -7,6 +7,7 @@ interface PaymentModalProps {
   items: CartItem[];
   total: number;
   onClose: () => void;
+  onOrderPlaced: (orderNumber: number) => void;
 }
 
 type PaymentMethod = "paypal" | "eckarte" | "applepay" | null;
@@ -15,7 +16,7 @@ function formatPrice(price: number) {
   return price.toFixed(2).replace(".", ",") + " €";
 }
 
-/** Apple logo (silhouette, currentColor) — beside “Apple Pay” label */
+/** Apple logo (silhouette, currentColor) — beside "Apple Pay" label */
 function AppleLogo({ className }: { className?: string }) {
   return (
     <svg
@@ -37,15 +38,13 @@ function resolveApiUrl(path: string): string {
 }
 
 /** Wie LYS Website: optional absolute API-Root (VITE_API_BASE_URL), sonst gleiche Origin wie die App. */
-function stripeCreateCheckoutUrl(): string {
+function orderUrl(): string {
   const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") ?? "";
-  if (apiBase) {
-    return `${apiBase}/api/stripe/create-checkout-session`;
-  }
-  return resolveApiUrl("/api/stripe/create-checkout-session");
+  if (apiBase) return `${apiBase}/api/order`;
+  return resolveApiUrl("/api/order");
 }
 
-/** Verhindert „endloses“ Laden, wenn API/Netzwerk nicht antwortet (z. B. langsamer Cold Start, blockierter In-App-Browser). */
+/** Verhindert „endloses" Laden, wenn API/Netzwerk nicht antwortet (z. B. langsamer Cold Start). */
 async function fetchWithTimeout(
   input: string,
   init: RequestInit | undefined,
@@ -61,7 +60,7 @@ async function fetchWithTimeout(
       (e instanceof Error && e.name === "AbortError");
     if (aborted) {
       throw new Error(
-        `Zeitüberschreitung nach ${Math.round(timeoutMs / 1000)}s: Server oder Netzwerk antwortet nicht. Seite neu laden, andere Netzwerkverbindung testen; in Instagram/Facebook-In-App-Browser oft blockiert — Safari/Chrome öffnen.`,
+        `Zeitüberschreitung nach ${Math.round(timeoutMs / 1000)}s: Server antwortet nicht.`,
       );
     }
     throw e;
@@ -70,73 +69,7 @@ async function fetchWithTimeout(
   }
 }
 
-const PAYMENT_START_FAILED_DE =
-  "Zahlung konnte nicht gestartet werden. Prüfen: (1) STRIPE_SECRET_KEY und STRIPE_PUBLISHABLE_KEY in Vercel (Environment: Production), (2) nach Änderungen Redeploy, (3) Zahlungsarten im Stripe-Dashboard (Karte/PayPal) und Test-/Live-Keys nicht mischen. Danach Seite mit Strg+F5 neu laden.";
-
-/** Text aus Error, String oder verschachtelten API-Antworten (z. B. Stripe) lesen. */
-function extractErrorText(raw: unknown): string {
-  if (raw == null) return "";
-  if (typeof raw === "string") return raw;
-  if (raw instanceof Error) return raw.message ?? "";
-  if (typeof raw === "object") {
-    const o = raw as Record<string, unknown>;
-    if (typeof o.message === "string") return o.message;
-    if (typeof o.error === "string") return o.error;
-    if (o.error && typeof o.error === "object") {
-      const inner = o.error as Record<string, unknown>;
-      if (typeof inner.message === "string") return inner.message;
-    }
-  }
-  try {
-    return String(raw);
-  } catch {
-    return "";
-  }
-}
-
-/** Ohne Leerzeichen/Sonderzeichen — fängt Zero-Width, NBSP-ähnliche Trenner, „couldn’t“-Varianten ab. */
-function compactPaymentStartFailureMatch(s: string): boolean {
-  const compact = s
-    .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    .replace(/\u2019/g, "'")
-    .replace(/\W/g, "")
-    .toLowerCase();
-  if (compact.includes("paymentcouldnotbestarted")) return true;
-  if (compact.includes("thepaymentcouldnotbestarted")) return true;
-  if (compact.includes("paymentcouldntbestarted")) return true;
-  if (compact.includes("couldnotbestarted") && compact.includes("payment")) return true;
-  return false;
-}
-
-/** Englische Stripe/Browser-Meldungen → deutsche Hinweise (auch bei Sonderzeichen / altem Bundle). */
-function normalizePaymentError(raw: unknown): string {
-  const msg = extractErrorText(raw);
-  const m = msg
-    .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    .replace(/\u2019/g, "'")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!m) return "Ein Fehler ist aufgetreten.";
-  // Stripe-Varianten: "Payment could not be started", "The payment could not be started", Apostroph-Varianten
-  if (
-    /(?:the\s+)?payment\s+could\s+not\s+be\s+started/i.test(m) ||
-    /payment\s+couldn['']?t\s+be\s+started/i.test(m) ||
-    (/could\s+not\s+be\s+started/i.test(m) && /payment/i.test(m)) ||
-    compactPaymentStartFailureMatch(m)
-  ) {
-    return PAYMENT_START_FAILED_DE;
-  }
-  if (/failed to fetch|load failed|networkerror/i.test(m)) {
-    return "Netzwerkfehler: Verbindung prüfen und die Seite über die aktuelle Vercel-URL öffnen.";
-  }
-  return msg;
-}
-
-async function createCheckoutSession(items: CartItem[], method: PaymentMethod) {
-  const baseUrl = window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, "");
-
-  /** POST wie LYS Website: /api/stripe/create-checkout-session (Alias: /api/checkout/session). */
-
+async function placeOrder(items: CartItem[]): Promise<number> {
   const lineItems = items.map((item) => ({
     id: item.id,
     name: item.name,
@@ -145,87 +78,101 @@ async function createCheckoutSession(items: CartItem[], method: PaymentMethod) {
   }));
 
   const response = await fetchWithTimeout(
-    stripeCreateCheckoutUrl(),
+    orderUrl(),
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        items: lineItems,
-        successUrl: `${baseUrl}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${baseUrl}/?payment=cancel`,
-        paymentMethod: method,
-      }),
+      body: JSON.stringify({ items: lineItems }),
     },
-    65_000,
+    30_000,
   );
 
   const raw = await response.text();
-  let data: {
-    url?: string;
-    error?: string;
-    message?: string;
-    stripeCode?: string;
-    stripeType?: string;
-  };
+  let data: { order_number?: number; error?: string };
   try {
     data = JSON.parse(raw) as typeof data;
   } catch {
     throw new Error(
       raw?.trim()
         ? raw.slice(0, 400)
-        : `Zahlung nicht gestartet (HTTP ${response.status}).`,
+        : `Bestellung fehlgeschlagen (HTTP ${response.status}).`,
     );
   }
 
   if (!response.ok) {
-    const base = data.error || data.message || `Zahlung nicht gestartet (HTTP ${response.status}).`;
-    const detail = [data.stripeCode, data.stripeType].filter(Boolean).join(" · ");
-    const msg = detail ? `${base} (${detail})` : base;
-    throw new Error(normalizePaymentError(msg));
+    throw new Error(data.error || `Bestellung fehlgeschlagen (HTTP ${response.status}).`);
   }
 
-  if (!data.url) {
-    throw new Error("Keine Checkout-URL von der API erhalten.");
+  if (typeof data.order_number !== "number") {
+    throw new Error("Keine Bestellnummer von der API erhalten.");
   }
-  return data.url;
+  return data.order_number;
 }
 
-export function PaymentModal({ items, total, onClose }: PaymentModalProps) {
+export function PaymentModal({ items, total, onClose, onOrderPlaced }: PaymentModalProps) {
   const { tr } = useLang();
   const [selected, setSelected] = useState<PaymentMethod>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [orderNumber, setOrderNumber] = useState<number | null>(null);
 
   const handlePay = async () => {
     if (!selected) return;
     setLoading(true);
     setError(null);
     try {
-      const url = await createCheckoutSession(items, selected);
-      window.location.href = url;
+      const num = await placeOrder(items);
+      setOrderNumber(num);
+      onOrderPlaced(num);
     } catch (err: unknown) {
-      setError(normalizePaymentError(err));
+      const msg = err instanceof Error ? err.message : "Ein Fehler ist aufgetreten.";
+      setError(msg);
+    } finally {
       setLoading(false);
     }
   };
 
   if (loading) {
-    const methodLabel =
-      selected === "paypal" ? tr.paypalPayment
-      : selected === "applepay" ? tr.applePayPayment
-      : tr.cardPayment;
-
     return (
       <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center text-center px-8">
         <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-8">
           <Loader2 size={38} className="text-primary animate-spin" strokeWidth={1.5} />
         </div>
         <h2 className="font-serif text-3xl font-semibold text-foreground mb-3">
-          {tr.redirectingTo(methodLabel)}
+          {tr.placeOrder}…
         </h2>
         <p className="text-muted-foreground text-[15px]">
           {tr.redirectingSubtitle}
         </p>
+      </div>
+    );
+  }
+
+  if (orderNumber !== null) {
+    return (
+      <div
+        className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center text-center px-8"
+        data-testid="order-confirmation"
+      >
+        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-8">
+          <CheckCircle size={42} className="text-primary" strokeWidth={1.5} />
+        </div>
+        <h2
+          className="font-serif text-4xl font-semibold text-foreground mb-3"
+          data-testid="text-order-number"
+        >
+          {tr.orderConfirmTitle(orderNumber)}
+        </h2>
+        <p className="text-muted-foreground text-[17px] mb-10">
+          {tr.orderConfirmSubtitle}
+        </p>
+        <button
+          data-testid="button-order-close"
+          onClick={onClose}
+          className="px-8 h-14 rounded-xl bg-primary text-primary-foreground text-[16px] font-semibold shadow-md active:scale-[0.98] transition-transform"
+        >
+          {tr.orderConfirmClose}
+        </button>
       </div>
     );
   }
@@ -264,7 +211,7 @@ export function PaymentModal({ items, total, onClose }: PaymentModalProps) {
           {error && (
             <div className="flex items-center gap-2 px-4 py-3 bg-destructive/10 border border-destructive/20 rounded-xl mb-4 text-destructive text-[13px]">
               <AlertCircle size={16} />
-              <span>{normalizePaymentError(error)}</span>
+              <span>{tr.orderFailedTitle}: {error}</span>
             </div>
           )}
 
