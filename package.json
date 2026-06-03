@@ -1,0 +1,7 @@
+{
+  "name": "lys-terminal-bestellseite",
+  "private": true,
+  "scripts": {
+    "build:vercel": "cd artifacts/api-server && npm install && npm run build && npm prune --omit=dev && cd ../.. && cd artifacts/lys-terminal && npm install && npm run build && cd ../.. && node scripts/copy-api-handler-for-vercel.mjs && npm install --omit=optional --no-audit --no-fund --prefix api && node scripts/vercel-prepare-public.mjs"
+  }
+}

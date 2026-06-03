@@ -1,0 +1,17 @@
+{
+  "name": "lys-terminal-vercel-api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Runtime-Abhängigkeiten für `api/serverless.mjs` (esbuild external). Vercel führt nach dem Build `npm install` in `api/` aus — ohne diese Einträge werden kopierte node_modules wieder entfernt.",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.2",
+    "pino": "^9.6.0",
+    "pino-http": "^10.4.0",
+    "stripe": "^22.0.0"
+  }
+}

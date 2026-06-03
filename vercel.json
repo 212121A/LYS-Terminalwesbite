@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build:vercel",
+  "installCommand": "npm install --omit=optional --no-audit --no-fund",
+  "outputDirectory": "public",
+  "framework": null,
+  "rewrites": [
+    { "source": "/api", "destination": "/api/index" },
+    { "source": "/api/(.*)", "destination": "/api/index?__path=$1" },
+    { "source": "/((?!api/|api$|assets/|favicon\\.svg|opengraph\\.jpg).*)", "destination": "/index.html" }
+  ],
+  "functions": {
+    "api/index.mjs": {
+      "maxDuration": 30
+    }
+  }
+}

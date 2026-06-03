@@ -1,0 +1,38 @@
+# --- Dependencies ---
+node_modules/
+
+# --- Build outputs ---
+dist/
+build/
+*.tsbuildinfo
+
+# --- Env / Secrets ---
+.env
+.env.local
+.env.*.local
+.env.production
+
+# --- Vercel ---
+.vercel/
+
+# --- Auto-generated (Vercel build prep) ---
+api/serverless.mjs
+api/node_modules
+
+# --- IDE / OS ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# --- Logs ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# --- Caches ---
+.turbo/
+.next/
+.cache/
+.parcel-cache/
+coverage/
