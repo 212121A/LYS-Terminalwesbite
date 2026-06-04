@@ -350,7 +350,7 @@ export function Terminal() {
       <header className="lys-smoke-bg overflow-hidden relative z-10 flex items-center justify-between px-6 py-4 border-b border-border shrink-0 bg-background min-[1600px]:px-10 min-[1600px]:py-7">
         <img
           src={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/logo.png`}
-          alt="LYS Noodle Box"
+          alt="LYS Noodles & Rice"
           className="h-10 md:h-12 w-auto object-contain shrink-0 min-[1600px]:h-20"
         />
 
