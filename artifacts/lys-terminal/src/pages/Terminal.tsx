@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
 import { menuData, DRINK_ITEM_IDS, type MenuItem } from "@/data/menu";
-import { BOX_ITEM_IDS, BOX_SAUCES, type BoxSauce } from "@/data/boxSauces";
+import { BOX_ITEM_IDS, BOX_SAUCES, extraSauceOptionsFor, type BoxSauce } from "@/data/boxSauces";
 import { useCart, type CartItemEditMeta } from "@/store/cart";
 import { MenuItemCard } from "@/components/MenuItemCard";
 import { BoxItemCard } from "@/components/BoxItemCard";
@@ -585,6 +585,7 @@ export function Terminal() {
           dishName={pendingExtraSauce.baseName}
           initialSauceId={pendingExtraSauce.initialSauceId}
           optional
+          sauces={extraSauceOptionsFor(pendingExtraSauce.itemId)}
           onClose={cancelPendingExtraSauce}
           onConfirm={handleExtraSauceConfirm}
         />
