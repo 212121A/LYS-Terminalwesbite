@@ -1,4 +1,3 @@
-import { Sparkles } from "lucide-react";
 import { isDiscountActive, DISCOUNT_PERCENT } from "@/lib/discount";
 import { useLang } from "@/i18n/LanguageContext";
 import type { LangCode } from "@/i18n/translations";
@@ -50,12 +49,6 @@ export function DiscountBadge() {
           "linear-gradient(135deg, #F2D188 0%, #E2B052 45%, #CE9433 100%)",
       }}
     >
-      <Sparkles
-        className="w-4 h-4 min-[1600px]:w-7 min-[1600px]:h-7 shrink-0"
-        strokeWidth={2.2}
-        style={{ color: "#5A3A18" }}
-        aria-hidden
-      />
       <span
         dir="ltr"
         className="font-serif font-bold leading-none text-[19px] min-[1600px]:text-[34px] tracking-tight"
