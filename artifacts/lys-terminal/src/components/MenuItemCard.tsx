@@ -2,6 +2,7 @@ import { useState, memo } from "react";
 import { Plus, Minus, Flame, Check } from "lucide-react";
 import { MenuItem, DRINK_ITEM_IDS } from "@/data/menu";
 import { useLang } from "@/i18n/LanguageContext";
+import t from "@/i18n/translations";
 import { AllergenCodes } from "@/components/AllergenCodes";
 
 type Carb = "nudel" | "reis";
@@ -112,7 +113,11 @@ function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: 
   }
 
   const carbLabel = carb === "nudel" ? tr.carbNudel : tr.carbReis;
-  const variantLabel = item.requiresCarbChoice ? carbLabel : undefined;
+  // Die Variante, die in den Warenkorb und damit an die Küche geht, ist IMMER
+  // deutsch — das Dashboard zeigt „Nudel"/„Reis" sprachunabhängig. Die Anzeige
+  // im Warenkorb bleibt über `addName` in der gewählten Sprache.
+  const carbKitchen = carb === "nudel" ? t.de.carbNudel : t.de.carbReis;
+  const variantLabel = item.requiresCarbChoice ? carbKitchen : undefined;
   const cartId = variantLabel ? `${item.id}-${variantLabel}` : item.id;
   // Speisen ohne eigene Soßen-Kategorie öffnen beim „+" das (optionale) Soßen-Modal;
   // daher kein Inline-Zähler, sondern nur ein „+"-Button (qty = 0). Soßen-Gerichte
@@ -120,7 +125,7 @@ function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: 
   const needsModal =
     item.optionProfile != null || (!DRINK_ITEM_IDS.has(item.id) && !item.requiresCarbChoice);
   const qty = needsModal ? 0 : quantityInCart(cartId);
-  const addName = variantLabel ? `${displayName} · ${variantLabel}` : displayName;
+  const addName = item.requiresCarbChoice ? `${displayName} · ${carbLabel}` : displayName;
   const handleAdd = () => onAdd(item.id, addName, item.price, variantLabel);
   const handleAddFlash = () => {
     handleAdd();
