@@ -12,6 +12,7 @@ import { SauceModal } from "@/components/SauceModal";
 import { ItemOptionsModal } from "@/components/ItemOptionsModal";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { AllergenLegendModal } from "@/components/AllergenLegendModal";
+import { DiscountBadge } from "@/components/DiscountBadge";
 import { useLang } from "@/i18n/LanguageContext";
 import { discountedPrice, formatPrice } from "@/lib/discount";
 import { ShoppingCart, Home, Info } from "lucide-react";
@@ -381,7 +382,7 @@ export function Terminal() {
       <div className="relative z-10 flex flex-1 overflow-hidden">
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="relative z-10 border-b border-border bg-background shrink-0">
-            <div className="flex justify-center gap-2 px-4 pt-3 pb-1 min-[1600px]:gap-4 min-[1600px]:pt-6 min-[1600px]:pb-2">
+            <div className="flex flex-wrap justify-center items-center gap-2 px-4 pt-3 pb-1 min-[1600px]:gap-4 min-[1600px]:pt-6 min-[1600px]:pb-2">
               {([["food", tr.menuFood], ["drinks", tr.menuDrinks]] as const).map(([v, label]) => (
                 <button
                   key={v}
@@ -396,6 +397,7 @@ export function Terminal() {
                   {label}
                 </button>
               ))}
+              <DiscountBadge />
             </div>
             <CategoryNav
               categories={visibleCategories}
