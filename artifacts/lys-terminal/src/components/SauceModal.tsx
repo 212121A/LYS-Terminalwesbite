@@ -13,11 +13,13 @@ interface SauceModalProps {
   /** Optionaler Modus für Nicht-Box-Speisen: zusätzliche „Ohne extra Soße"-Option,
    *  Bestätigen immer möglich (gibt dann null zurück). */
   optional?: boolean;
+  /** Auswählbare Soßen. Default: alle. Süße Gerichte schränken die Liste ein. */
+  sauces?: BoxSauce[];
   onClose: () => void;
   onConfirm: (sauce: BoxSauce | null) => void;
 }
 
-export function SauceModal({ dishName, initialSauceId, optional, onClose, onConfirm }: SauceModalProps) {
+export function SauceModal({ dishName, initialSauceId, optional, sauces = BOX_SAUCES, onClose, onConfirm }: SauceModalProps) {
   const { tr } = useLang();
   const [selectedId, setSelectedId] = useState<string | null>(
     () => initialSauceId ?? (optional ? NONE : null),
@@ -34,8 +36,8 @@ export function SauceModal({ dishName, initialSauceId, optional, onClose, onConf
   };
 
   const options = optional
-    ? [{ id: NONE, label: tr.extraSauceNone }, ...BOX_SAUCES]
-    : BOX_SAUCES;
+    ? [{ id: NONE, label: tr.extraSauceNone }, ...sauces]
+    : sauces;
 
   return (
     <div
