@@ -4,6 +4,7 @@ import { MenuItem, DRINK_ITEM_IDS } from "@/data/menu";
 import { useLang } from "@/i18n/LanguageContext";
 import t from "@/i18n/translations";
 import { AllergenCodes } from "@/components/AllergenCodes";
+import { Price } from "@/components/Price";
 
 type Carb = "nudel" | "reis";
 
@@ -13,10 +14,6 @@ interface MenuItemCardProps {
   onAdd: (itemId: string, name: string, price: number, sizeLabel?: string) => void;
   onRemove: (cartId: string) => void;
   index?: number;
-}
-
-function formatPrice(price: number) {
-  return price.toFixed(2).replace(".", ",") + " €";
 }
 
 function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: MenuItemCardProps) {
@@ -69,7 +66,7 @@ function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: 
                 <span className="text-[13px] min-[1600px]:text-[24px] text-muted-foreground">{translatedLabel}</span>
                 <div className="flex items-center gap-3">
                   <span className="text-[15px] min-[1600px]:text-[28px] font-medium text-foreground tabular-nums">
-                    {formatPrice(size.price)}
+                    <Price value={size.price} />
                   </span>
                   {qty === 0 ? (
                     <button
@@ -182,7 +179,7 @@ function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: 
 
       <div className="flex items-center gap-3 shrink-0">
         <span className="text-[15px] min-[1600px]:text-[28px] font-medium text-foreground tabular-nums">
-          {formatPrice(item.price)}
+          <Price value={item.price} />
         </span>
 
         {qty === 0 ? (

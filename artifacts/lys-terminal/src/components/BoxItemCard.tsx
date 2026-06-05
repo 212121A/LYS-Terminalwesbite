@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { type BoxBaseItem } from "@/data/menu";
 import { useLang } from "@/i18n/LanguageContext";
 import { AllergenCodes } from "@/components/AllergenCodes";
+import { Price } from "@/components/Price";
 
 type Carb = "nudel" | "reis";
 type Size = "klein" | "gross";
@@ -14,10 +15,6 @@ interface BoxItemCardProps {
    *  bewusst NICHT gesetzt, damit das Soßen-Modal in Terminal.tsx öffnet. */
   onAdd: (itemId: string, name: string, price: number) => void;
   index?: number;
-}
-
-function formatPrice(price: number) {
-  return price.toFixed(2).replace(".", ",") + " €";
 }
 
 function BoxItemCardBase({ item, onAdd, index = 0 }: BoxItemCardProps) {
@@ -91,7 +88,7 @@ function BoxItemCardBase({ item, onAdd, index = 0 }: BoxItemCardProps) {
             >
               <Plus size={14} strokeWidth={2.5} className="min-[1600px]:w-7 min-[1600px]:h-7" />
               <span>{tr.sizeSmall}</span>
-              <span className="text-foreground/80">{formatPrice(item.sizes.klein!)}</span>
+              <span className="text-foreground/80"><Price value={item.sizes.klein!} /></span>
             </button>
             <button
               data-testid={`button-box-add-${item.id}-${carb}-gross`}
@@ -100,13 +97,13 @@ function BoxItemCardBase({ item, onAdd, index = 0 }: BoxItemCardProps) {
             >
               <Plus size={14} strokeWidth={2.5} className="min-[1600px]:w-7 min-[1600px]:h-7" />
               <span>{tr.sizeLarge}</span>
-              <span className="text-foreground/80">{formatPrice(item.sizes.gross)}</span>
+              <span className="text-foreground/80"><Price value={item.sizes.gross} /></span>
             </button>
           </>
         ) : (
           <div className="flex items-center gap-3">
             <span className="text-[15px] min-[1600px]:text-[28px] font-medium text-foreground tabular-nums">
-              {formatPrice(item.sizes.gross)}
+              <Price value={item.sizes.gross} />
             </span>
             <button
               data-testid={`button-box-add-${item.id}-${carb}-gross`}
