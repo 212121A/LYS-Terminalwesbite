@@ -13,11 +13,8 @@ import { ItemOptionsModal } from "@/components/ItemOptionsModal";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { AllergenLegendModal } from "@/components/AllergenLegendModal";
 import { useLang } from "@/i18n/LanguageContext";
+import { discountedPrice, formatPrice } from "@/lib/discount";
 import { ShoppingCart, Home, Info } from "lucide-react";
-
-function formatPrice(price: number) {
-  return price.toFixed(2).replace(".", ",") + " €";
-}
 
 interface PendingSauce {
   itemId: string;
@@ -486,12 +483,12 @@ export function Terminal() {
           <button
             data-testid="button-open-cart"
             onClick={() => setShowCartMobile(true)}
-            aria-label={`${tr.articles(itemCount)} · ${formatPrice(total)}`}
+            aria-label={`${tr.articles(itemCount)} · ${formatPrice(discountedPrice(total))}`}
             className="md:hidden shrink-0 w-20 border-l border-black/10 bg-primary text-primary-foreground flex flex-col items-center justify-center gap-5 active:scale-[0.99] transition-transform shadow-lg"
           >
             <ShoppingCart strokeWidth={2} className="w-7 h-7" />
             <span className="text-[20px] font-bold tabular-nums">{itemCount}</span>
-            <span className="text-[15px] font-semibold tabular-nums">{formatPrice(total)}</span>
+            <span className="text-[15px] font-semibold tabular-nums">{formatPrice(discountedPrice(total))}</span>
           </button>
         )}
 

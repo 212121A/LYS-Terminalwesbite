@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ShoppingCart, Trash2, Plus, Minus, Pencil } from "lucide-react";
 import { CartItem } from "@/store/cart";
 import { useLang } from "@/i18n/LanguageContext";
+import { Price } from "@/components/Price";
 
 interface CartPanelProps {
   items: CartItem[];
@@ -12,10 +13,6 @@ interface CartPanelProps {
   onRemoveLine?: (cartId: string) => void;
   onCheckout: () => void;
   onClear: () => void;
-}
-
-function formatPrice(price: number) {
-  return price.toFixed(2).replace(".", ",") + " €";
 }
 
 /** Sanftes Hochzählen des Gesamtpreises; respektiert prefers-reduced-motion. */
@@ -98,13 +95,13 @@ export function CartPanel({ items, total, onRemove, onAdd, onEdit, onRemoveLine,
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-[14px] min-[1600px]:text-[22px] font-medium text-foreground leading-snug">{item.name}</p>
-                    <p className="text-[13px] min-[1600px]:text-[18px] text-muted-foreground mt-0.5">{formatPrice(item.price)} {tr.perPiece}</p>
+                    <p className="text-[13px] min-[1600px]:text-[18px] text-muted-foreground mt-0.5"><Price value={item.price} /> {tr.perPiece}</p>
                   </div>
                   <p
                     key={item.quantity}
                     className="lys-pop text-[14px] min-[1600px]:text-[22px] font-semibold text-foreground tabular-nums shrink-0"
                   >
-                    {formatPrice(item.price * item.quantity)}
+                    <Price value={item.price * item.quantity} />
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -162,7 +159,7 @@ export function CartPanel({ items, total, onRemove, onAdd, onEdit, onRemoveLine,
                   data-testid="text-cart-total"
                   className="text-[20px] min-[1600px]:text-[34px] font-semibold text-primary tabular-nums"
                 >
-                  {formatPrice(animatedTotal)}
+                  <Price value={animatedTotal} />
                 </span>
               </div>
               <button

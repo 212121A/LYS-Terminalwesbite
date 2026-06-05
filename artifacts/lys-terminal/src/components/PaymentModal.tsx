@@ -4,7 +4,9 @@ import { CartItem } from "@/store/cart";
 import { menuData, boxMenuItems, type MenuItem } from "@/data/menu";
 import { BOX_ITEM_IDS } from "@/data/boxSauces";
 import { buildKitchenIndex, toKitchenLineItem } from "@/lib/kitchenOrder";
+import { discountedPrice } from "@/lib/discount";
 import { useLang } from "@/i18n/LanguageContext";
+import { Price } from "@/components/Price";
 
 interface PaymentModalProps {
   items: CartItem[];
@@ -48,10 +50,6 @@ const UPSELL_CATEGORIES: UpsellCategory[] = [
   },
 ];
 
-function formatPrice(price: number) {
-  return price.toFixed(2).replace(".", ",") + " €";
-}
-
 const N8N_TERMINAL_WEBHOOK_URL = "https://feal.app.n8n.cloud/webhook/order_made";
 
 async function fetchWithTimeout(input: string, init: RequestInit | undefined, timeoutMs: number): Promise<Response> {
@@ -76,12 +74,18 @@ async function submitPayAtCounter(items: CartItem[], boxOption: BoxOption | null
   const baseUrl = window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, "");
   // Die Küche bekommt IMMER deutsche Posten (Name/Code aus dem Menü-Register),
   // unabhängig von der im Terminal gewählten Sprache.
-  const lineItems = items.map((item) => ({
-    ...toKitchenLineItem(KITCHEN_INDEX, item),
-    // Box-Zustand (offen/zu) am Box-Artikel mitschicken, damit das Küchen-
-    // Dashboard ihn aus dem items-JSON lesen kann (n8n speichert items 1:1).
-    ...(BOX_ITEM_IDS.has(item.itemId) && boxOption ? { box_option: boxOption } : {}),
-  }));
+  const lineItems = items.map((item) => {
+    const line = toKitchenLineItem(KITCHEN_INDEX, item);
+    return {
+      ...line,
+      // Während der Eröffnungswoche zahlt der Gast den rabattierten Preis — also
+      // geht auch der rabattierte Preis ans Küchen-/Bestell-Backend.
+      price: discountedPrice(line.price),
+      // Box-Zustand (offen/zu) am Box-Artikel mitschicken, damit das Küchen-
+      // Dashboard ihn aus dem items-JSON lesen kann (n8n speichert items 1:1).
+      ...(BOX_ITEM_IDS.has(item.itemId) && boxOption ? { box_option: boxOption } : {}),
+    };
+  });
 
   const response = await fetchWithTimeout(
     N8N_TERMINAL_WEBHOOK_URL,
@@ -230,7 +234,7 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced, onAddItem }
               <h2 className="font-serif text-[24px] font-semibold text-foreground truncate">
                 {step === "drinks" && activeCategory ? catLabel(activeCategory) : tr.orderTitle}
               </h2>
-              <p className="text-muted-foreground text-[13px] mt-0.5">{tr.total}: {formatPrice(total)}</p>
+              <p className="text-muted-foreground text-[13px] mt-0.5">{tr.total}: <Price value={total} /></p>
             </div>
           </div>
           <button
@@ -326,7 +330,7 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced, onAddItem }
                       <div className="min-w-0">
                         <p className="text-[15px] font-medium text-foreground truncate">{item.name}</p>
                         <p className="text-[13px] text-muted-foreground">
-                          {formatPrice(item.price)}
+                          <Price value={item.price} />
                           {item.optionProfile ? ` · ${tr.chooseOptions}` : ""}
                         </p>
                         {item.description && (
@@ -412,7 +416,7 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced, onAddItem }
                         {item.name}
                       </span>
                       <span className="text-[14px] font-medium text-foreground tabular-nums shrink-0">
-                        {formatPrice(item.price * item.quantity)}
+                        <Price value={item.price * item.quantity} />
                       </span>
                     </div>
                   </div>
@@ -420,7 +424,7 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced, onAddItem }
               </div>
               <div className="flex items-center justify-between px-1 mb-5">
                 <span className="text-[15px] font-medium text-primary">{tr.total}</span>
-                <span className="text-[20px] font-semibold text-primary tabular-nums">{formatPrice(total)}</span>
+                <span className="text-[20px] font-semibold text-primary tabular-nums"><Price value={total} /></span>
               </div>
 
               <button
