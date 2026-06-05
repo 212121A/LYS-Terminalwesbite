@@ -351,10 +351,41 @@
   animation: lys-float 3.2s ease-in-out infinite;
 }
 
+/* Eröffnungswoche-Badge: diagonaler Lichtschimmer + sanft pulsierender Goldglow. */
+@keyframes lys-promo-shimmer {
+  0% { transform: translateX(-140%) skewX(-14deg); }
+  60%, 100% { transform: translateX(320%) skewX(-14deg); }
+}
+
+@keyframes lys-promo-glow {
+  0%, 100% { box-shadow: 0 5px 16px -6px rgba(176, 120, 38, 0.5), 0 0 0 0 rgba(224, 176, 72, 0); }
+  50% { box-shadow: 0 9px 24px -6px rgba(176, 120, 38, 0.68), 0 0 0 4px rgba(224, 176, 72, 0.16); }
+}
+
+.lys-promo-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 42%;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 251, 238, 0.72) 50%, transparent 100%);
+  animation: lys-promo-shimmer 4s ease-in-out infinite;
+}
+
+.lys-promo-glow {
+  animation: lys-promo-glow 2.9s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lys-pop,
   .lys-badge-pop,
-  .lys-float {
+  .lys-float,
+  .lys-promo-glow {
     animation: none;
+  }
+  .lys-promo-shimmer::after {
+    display: none;
   }
 }
