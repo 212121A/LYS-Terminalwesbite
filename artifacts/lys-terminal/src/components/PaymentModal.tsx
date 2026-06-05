@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { X, Plus, AlertCircle, Loader2, ChevronLeft, Check, Package, PackageOpen } from "lucide-react";
 import { CartItem } from "@/store/cart";
-import { menuData, type MenuItem } from "@/data/menu";
+import { menuData, boxMenuItems, type MenuItem } from "@/data/menu";
 import { BOX_ITEM_IDS } from "@/data/boxSauces";
+import { buildKitchenIndex, toKitchenLineItem } from "@/lib/kitchenOrder";
 import { useLang } from "@/i18n/LanguageContext";
 
 interface PaymentModalProps {
@@ -68,20 +69,15 @@ type PayAtCounterResponse = {
   orderNumber: string;
 };
 
-function kitchenItemId(item: CartItem) {
-  return item.sizeLabel ? `${item.itemId} ${item.sizeLabel}` : item.itemId;
-}
+// Einmalig: Index Warenkorb-itemId → deutscher Name + Menü-Code (sprachneutral).
+const KITCHEN_INDEX = buildKitchenIndex(menuData, boxMenuItems);
 
 async function submitPayAtCounter(items: CartItem[], boxOption: BoxOption | null): Promise<PayAtCounterResponse> {
   const baseUrl = window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, "");
+  // Die Küche bekommt IMMER deutsche Posten (Name/Code aus dem Menü-Register),
+  // unabhängig von der im Terminal gewählten Sprache.
   const lineItems = items.map((item) => ({
-    id: kitchenItemId(item),
-    cartId: item.id,
-    itemId: item.itemId,
-    name: item.name,
-    sizeLabel: item.sizeLabel,
-    price: item.price,
-    quantity: item.quantity,
+    ...toKitchenLineItem(KITCHEN_INDEX, item),
     // Box-Zustand (offen/zu) am Box-Artikel mitschicken, damit das Küchen-
     // Dashboard ihn aus dem items-JSON lesen kann (n8n speichert items 1:1).
     ...(BOX_ITEM_IDS.has(item.itemId) && boxOption ? { box_option: boxOption } : {}),
