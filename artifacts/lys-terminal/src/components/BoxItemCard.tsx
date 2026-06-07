@@ -4,6 +4,8 @@ import { type BoxBaseItem } from "@/data/menu";
 import { useLang } from "@/i18n/LanguageContext";
 import { AllergenCodes } from "@/components/AllergenCodes";
 import { Price } from "@/components/Price";
+import { useAvailability } from "@/availability/AvailabilityContext";
+import { boxAvailabilityId } from "@/lib/availability";
 
 type Carb = "nudel" | "reis";
 type Size = "klein" | "gross";
@@ -19,6 +21,8 @@ interface BoxItemCardProps {
 
 function BoxItemCardBase({ item, onAdd, index = 0 }: BoxItemCardProps) {
   const { tr } = useLang();
+  const { isItemSoldOut } = useAvailability();
+  const soldOut = isItemSoldOut(boxAvailabilityId(item));
   const [carb, setCarb] = useState<Carb>("nudel");
   const cardDelay = Math.min(index, 10) * 40;
 
@@ -26,6 +30,24 @@ function BoxItemCardBase({ item, onAdd, index = 0 }: BoxItemCardProps) {
     item.dishType && tr.dishNames[item.dishType]
       ? tr.dishNames[item.dishType]
       : item.name;
+
+  if (soldOut) {
+    return (
+      <div
+        data-testid={`card-box-${item.id}`}
+        aria-disabled="true"
+        className="bg-card border border-card-border rounded-xl p-4 flex items-center justify-between gap-4 opacity-50 pointer-events-none select-none"
+      >
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium text-foreground text-[15px] line-through">{baseName}</h3>
+          <span className="text-[12px] font-medium text-muted-foreground">{tr.soldOut}</span>
+        </div>
+        <span className="text-[15px] font-medium text-muted-foreground tabular-nums">
+          <Price value={item.sizes.gross} />
+        </span>
+      </div>
+    );
+  }
 
   const carbLabel = carb === "nudel" ? tr.carbNudel : tr.carbReis;
   const current = item.carbs[carb];

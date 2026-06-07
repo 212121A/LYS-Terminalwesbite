@@ -13,6 +13,7 @@ import { ItemOptionsModal } from "@/components/ItemOptionsModal";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { AllergenLegendModal } from "@/components/AllergenLegendModal";
 import { DiscountBadge } from "@/components/DiscountBadge";
+import { StaffEditOverlay } from "@/components/StaffEditOverlay";
 import { useLang } from "@/i18n/LanguageContext";
 import { discountedPrice, formatPrice } from "@/lib/discount";
 import { ShoppingCart, Home, Info } from "lucide-react";
@@ -71,6 +72,15 @@ export function Terminal() {
   const [showAllergens, setShowAllergens] = useState(false);
   const [editingCartId, setEditingCartId] = useState<string | null>(null);
   const [editingQty, setEditingQty] = useState(1);
+  const [staffOpen, setStaffOpen] = useState(false);
+  const staffTimer = useRef<number | null>(null);
+
+  const startStaffPress = () => {
+    staffTimer.current = window.setTimeout(() => setStaffOpen(true), 2000);
+  };
+  const cancelStaffPress = () => {
+    if (staffTimer.current) { window.clearTimeout(staffTimer.current); staffTimer.current = null; }
+  };
   const menuRef = useRef<HTMLDivElement>(null);
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
   /** Zeitstempel, bis zu dem der Scroll-Spy gesperrt ist (programmatisches Scrollen). */
@@ -346,11 +356,22 @@ export function Terminal() {
   return (
     <div className="relative flex flex-col h-screen bg-background overflow-hidden animate-in fade-in duration-500">
       <header className="lys-smoke-bg overflow-hidden relative z-10 flex items-center justify-between px-6 py-4 border-b border-border shrink-0 bg-background min-[1600px]:px-10 min-[1600px]:py-7">
-        <img
-          src={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/logo.png`}
-          alt="LYS Noodles & Rice"
-          className="h-10 md:h-12 w-auto object-contain shrink-0 min-[1600px]:h-20"
-        />
+        <button
+          type="button"
+          aria-label="Personal: Verfügbarkeit bearbeiten"
+          onPointerDown={startStaffPress}
+          onPointerUp={cancelStaffPress}
+          onPointerLeave={cancelStaffPress}
+          onContextMenu={(e) => e.preventDefault()}
+          className="shrink-0 cursor-default"
+        >
+          <img
+            src={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/logo.png`}
+            alt="LYS Noodles & Rice"
+            className="h-10 md:h-12 w-auto object-contain shrink-0 min-[1600px]:h-20 pointer-events-none select-none"
+            draggable={false}
+          />
+        </button>
 
         <div className="hidden md:block">
           <h1 className="font-serif text-[22px] font-medium text-primary tracking-wide min-[1600px]:text-[36px]">{tr.order}</h1>
@@ -612,6 +633,8 @@ export function Terminal() {
           onAddItem={handleAdd}
         />
       )}
+
+      {staffOpen && <StaffEditOverlay onClose={() => setStaffOpen(false)} />}
     </div>
   );
 }

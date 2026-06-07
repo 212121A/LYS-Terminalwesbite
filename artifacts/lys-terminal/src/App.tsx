@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { StartScreen } from "@/pages/StartScreen";
 import { Terminal } from "@/pages/Terminal";
 import { LanguageProvider } from "@/i18n/LanguageContext";
+import { AvailabilityProvider } from "@/availability/AvailabilityContext";
 
 // Sekundär-Routes lazy laden (kleineres Haupt-Bundle, schnellerer Start).
 const OrderSuccess = lazy(() => import("@/pages/OrderSuccess").then((m) => ({ default: m.OrderSuccess })));
@@ -35,11 +36,13 @@ function App() {
     <LanguageProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <ErrorBoundary>
-              <Router />
-            </ErrorBoundary>
-          </WouterRouter>
+          <AvailabilityProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <ErrorBoundary>
+                <Router />
+              </ErrorBoundary>
+            </WouterRouter>
+          </AvailabilityProvider>
           <Toaster />
         </TooltipProvider>
       </QueryClientProvider>

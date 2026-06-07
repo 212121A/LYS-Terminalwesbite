@@ -119,6 +119,7 @@ export interface Translations {
   carbNudel: string;
   carbReis: string;
   articles: (n: number) => string;
+  soldOut: string;
   categories: Record<string, string>;
   dishNames: Record<string, string>;
 }
@@ -208,6 +209,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Groß",
     carbNudel: "Nudel",
     carbReis: "Reis",
+    soldOut: "Heute leider aus",
     articles: (n) => `${n} Artikel`,
     categories: {
       vorspeisen: "Vorspeisen",
@@ -351,6 +353,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Lớn",
     carbNudel: "Mì",
     carbReis: "Cơm",
+    soldOut: "Hôm nay hết hàng",
     articles: (n) => `${n} món`,
     categories: {
       vorspeisen: "Khai vị",
@@ -494,6 +497,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Large",
     carbNudel: "Noodles",
     carbReis: "Rice",
+    soldOut: "Sold out today",
     articles: (n) => `${n} item${n !== 1 ? "s" : ""}`,
     categories: {
       vorspeisen: "Starters",
@@ -637,6 +641,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Grand",
     carbNudel: "Nouilles",
     carbReis: "Riz",
+    soldOut: "Épuisé aujourd'hui",
     articles: (n) => `${n} article${n !== 1 ? "s" : ""}`,
     categories: {
       vorspeisen: "Entrées",
@@ -780,6 +785,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Grande",
     carbNudel: "Fideos",
     carbReis: "Arroz",
+    soldOut: "Agotado hoy",
     articles: (n) => `${n} artículo${n !== 1 ? "s" : ""}`,
     categories: {
       vorspeisen: "Entrantes",
@@ -923,6 +929,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Grande",
     carbNudel: "Noodle",
     carbReis: "Riso",
+    soldOut: "Esaurito oggi",
     articles: (n) => `${n} articolo${n !== 1 ? "i" : ""}`,
     categories: {
       vorspeisen: "Antipasti",
@@ -1066,6 +1073,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Grande",
     carbNudel: "Massa",
     carbReis: "Arroz",
+    soldOut: "Esgotado hoje",
     articles: (n) => `${n} artigo${n !== 1 ? "s" : ""}`,
     categories: {
       vorspeisen: "Entradas",
@@ -1209,6 +1217,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Duży",
     carbNudel: "Makaron",
     carbReis: "Ryż",
+    soldOut: "Dziś niedostępne",
     articles: (n) => `${n} pozycj${n === 1 ? "a" : n < 5 ? "e" : "i"}`,
     categories: {
       vorspeisen: "Przystawki",
@@ -1352,6 +1361,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Большой",
     carbNudel: "Лапша",
     carbReis: "Рис",
+    soldOut: "Сегодня нет в наличии",
     articles: (n) => `${n} позиц${n === 1 ? "ия" : n < 5 ? "ии" : "ий"}`,
     categories: {
       vorspeisen: "Закуски",
@@ -1495,6 +1505,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Büyük",
     carbNudel: "Erişte",
     carbReis: "Pirinç",
+    soldOut: "Bugün tükendi",
     articles: (n) => `${n} ürün`,
     categories: {
       vorspeisen: "Başlangıçlar",
@@ -1638,6 +1649,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "كبير",
     carbNudel: "نودلز",
     carbReis: "أرز",
+    soldOut: "نفد اليوم",
     articles: (n) => `${n} عنصر`,
     categories: {
       vorspeisen: "مقبلات",
@@ -1781,6 +1793,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "大份",
     carbNudel: "面条",
     carbReis: "米饭",
+    soldOut: "今日售罄",
     articles: (n) => `${n} 件`,
     categories: {
       vorspeisen: "前菜",
@@ -1924,6 +1937,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "大",
     carbNudel: "麺",
     carbReis: "ご飯",
+    soldOut: "本日売り切れ",
     articles: (n) => `${n} 点`,
     categories: {
       vorspeisen: "前菜",
@@ -2067,6 +2081,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "대",
     carbNudel: "면",
     carbReis: "밥",
+    soldOut: "오늘 품절",
     articles: (n) => `${n}개`,
     categories: {
       vorspeisen: "애피타이저",
@@ -2210,6 +2225,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Groot",
     carbNudel: "Noedels",
     carbReis: "Rijst",
+    soldOut: "Vandaag uitverkocht",
     articles: (n) => `${n} artikel${n !== 1 ? "en" : ""}`,
     categories: {
       vorspeisen: "Voorgerechten",
@@ -2353,6 +2369,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Mare",
     carbNudel: "Tăiței",
     carbReis: "Orez",
+    soldOut: "Epuizat azi",
     articles: (n) => `${n} articol${n !== 1 ? "e" : ""}`,
     categories: {
       vorspeisen: "Aperitive",
@@ -2496,6 +2513,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Nagy",
     carbNudel: "Tészta",
     carbReis: "Rizs",
+    soldOut: "Ma elfogyott",
     articles: (n) => `${n} tétel`,
     categories: {
       vorspeisen: "Előételek",
@@ -2639,6 +2657,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Velký",
     carbNudel: "Nudle",
     carbReis: "Rýže",
+    soldOut: "Dnes vyprodáno",
     articles: (n) => `${n} položk${n === 1 ? "a" : n < 5 ? "y" : ""}`,
     categories: {
       vorspeisen: "Předkrmy",
@@ -2782,6 +2801,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Μεγάλο",
     carbNudel: "Νουντλς",
     carbReis: "Ρύζι",
+    soldOut: "Εξαντλήθηκε σήμερα",
     articles: (n) => `${n} είδος${n !== 1 ? "η" : ""}`,
     categories: {
       vorspeisen: "Ορεκτικά",
@@ -2925,6 +2945,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "बड़ा",
     carbNudel: "नूडल्स",
     carbReis: "चावल",
+    soldOut: "आज उपलब्ध नहीं",
     articles: (n) => `${n} आइटम`,
     categories: {
       vorspeisen: "स्टार्टर",
@@ -3068,6 +3089,7 @@ const t: Record<LangCode, Translations> = {
     sizeLarge: "Великий",
     carbNudel: "Локшина",
     carbReis: "Рис",
+    soldOut: "Сьогодні немає в наявності",
     articles: (n) => `${n} позиц${n === 1 ? "ія" : n < 5 ? "ії" : "ій"}`,
     categories: {
       vorspeisen: "Закуски",

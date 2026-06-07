@@ -5,6 +5,8 @@ import { useLang } from "@/i18n/LanguageContext";
 import t from "@/i18n/translations";
 import { AllergenCodes } from "@/components/AllergenCodes";
 import { Price } from "@/components/Price";
+import { useAvailability } from "@/availability/AvailabilityContext";
+import { dishAvailabilityId } from "@/lib/availability";
 
 type Carb = "nudel" | "reis";
 
@@ -18,6 +20,8 @@ interface MenuItemCardProps {
 
 function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: MenuItemCardProps) {
   const { tr } = useLang();
+  const { isItemSoldOut } = useAvailability();
+  const soldOut = isItemSoldOut(dishAvailabilityId(item));
   const [carb, setCarb] = useState<Carb>("nudel");
   const [flashKey, setFlashKey] = useState<string | null>(null);
   const cardDelay = Math.min(index, 10) * 40;
@@ -29,6 +33,24 @@ function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: 
 
   const displayName =
     item.dishType && tr.dishNames[item.dishType] ? tr.dishNames[item.dishType] : item.name;
+
+  if (soldOut) {
+    return (
+      <div
+        data-testid={`card-menuitem-${item.id}`}
+        aria-disabled="true"
+        className="bg-card border border-card-border rounded-xl p-4 flex items-center justify-between gap-4 opacity-50 pointer-events-none select-none"
+      >
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium text-foreground text-[15px] line-through">{displayName}</h3>
+          <span className="text-[12px] font-medium text-muted-foreground">{tr.soldOut}</span>
+        </div>
+        <span className="text-[15px] font-medium text-muted-foreground tabular-nums">
+          <Price value={item.price} />
+        </span>
+      </div>
+    );
+  }
 
   const getSizeLabel = (label: string) => {
     if (label === "Klein") return tr.sizeSmall;
