@@ -61,26 +61,42 @@ export function StaffEditOverlay({ onClose }: { onClose: () => void }) {
 
   async function verifyPin() {
     setError(null);
-    const res = await fetch("/api/availability/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pin }),
-    });
-    if (res.ok) setAuthed(true);
-    else setError("Falsche PIN");
+    try {
+      const res = await fetch("/api/availability/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin }),
+      });
+      if (res.ok) {
+        setAuthed(true);
+      } else {
+        setError("Falsche PIN");
+        setPin("");
+      }
+    } catch {
+      setError("Server nicht erreichbar");
+    }
   }
 
   async function setAvailability(availabilityId: string, action: Action) {
     setBusy(availabilityId);
     setError(null);
-    const res = await fetch("/api/availability", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pin, itemId: availabilityId, action }),
-    });
-    if (!res.ok) setError("Speichern fehlgeschlagen");
-    await refetch();
-    setBusy(null);
+    try {
+      const res = await fetch("/api/availability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin, itemId: availabilityId, action }),
+      });
+      if (!res.ok) {
+        setError("Speichern fehlgeschlagen");
+        return;
+      }
+      await refetch();
+    } catch {
+      setError("Server nicht erreichbar");
+    } finally {
+      setBusy(null);
+    }
   }
 
   return (
@@ -138,13 +154,22 @@ export function StaffEditOverlay({ onClose }: { onClose: () => void }) {
                               Verfügbar
                             </button>
                           ) : (
-                            <button
-                              disabled={isBusy}
-                              onClick={() => void setAvailability(entry.availabilityId, "sold_out_today")}
-                              className="h-8 px-3 rounded-lg bg-muted text-foreground text-[13px] font-medium active:scale-95 disabled:opacity-50"
-                            >
-                              Heute aus
-                            </button>
+                            <>
+                              <button
+                                disabled={isBusy}
+                                onClick={() => void setAvailability(entry.availabilityId, "sold_out_today")}
+                                className="h-8 px-3 rounded-lg bg-muted text-foreground text-[13px] font-medium active:scale-95 disabled:opacity-50"
+                              >
+                                Heute aus
+                              </button>
+                              <button
+                                disabled={isBusy}
+                                onClick={() => void setAvailability(entry.availabilityId, "sold_out_permanent")}
+                                className="h-8 px-3 rounded-lg border border-border text-muted-foreground text-[13px] font-medium active:scale-95 disabled:opacity-50"
+                              >
+                                Dauerhaft aus
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>

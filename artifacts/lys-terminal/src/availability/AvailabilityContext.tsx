@@ -44,19 +44,24 @@ export function AvailabilityProvider({ children }: { children: React.ReactNode }
     void refetch();
     const interval = window.setInterval(() => void refetch(), POLL_MS);
     const onFocus = () => void refetch();
+    // Nur beim Sichtbarwerden refetchen, nicht beim Verstecken des Tabs.
+    const onVisibility = () => { if (document.visibilityState === "visible") void refetch(); };
     window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       mounted.current = false;
       window.clearInterval(interval);
       window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [refetch]);
 
+  // Geschäftstag nur bei rows-Update neu berechnen (Polling erneuert rows alle 15s,
+  // ein Tageswechsel wird also zeitnah erkannt) statt einmal pro Item.
+  const businessDay = useMemo(() => currentBusinessDay(), [rows]);
   const isItemSoldOut = useCallback(
-    (availabilityId: string) => isSoldOut(rows.get(availabilityId), currentBusinessDay()),
-    [rows],
+    (availabilityId: string) => isSoldOut(rows.get(availabilityId), businessDay),
+    [rows, businessDay],
   );
 
   const value = useMemo<AvailabilityContextValue>(
