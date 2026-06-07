@@ -2,6 +2,8 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { BOX_SAUCES, type BoxSauce } from "@/data/boxSauces";
 import { useLang } from "@/i18n/LanguageContext";
+import { useAvailability } from "@/availability/AvailabilityContext";
+import { sauceAvailabilityId } from "@/lib/availability";
 
 const NONE = "__none__";
 
@@ -21,6 +23,7 @@ interface SauceModalProps {
 
 export function SauceModal({ dishName, initialSauceId, optional, sauces = BOX_SAUCES, onClose, onConfirm }: SauceModalProps) {
   const { tr } = useLang();
+  const { isItemSoldOut } = useAvailability();
   const [selectedId, setSelectedId] = useState<string | null>(
     () => initialSauceId ?? (optional ? NONE : null),
   );
@@ -76,15 +79,19 @@ export function SauceModal({ dishName, initialSauceId, optional, sauces = BOX_SA
           <div className="space-y-2.5 mb-5">
             {options.map((sauce) => {
               const isSelected = selectedId === sauce.id;
+              const soldOut = sauce.id !== NONE && isItemSoldOut(sauceAvailabilityId(sauce as BoxSauce));
               return (
                 <button
                   key={sauce.id}
                   data-testid={`button-sauce-${sauce.id}`}
-                  onClick={() => setSelectedId(sauce.id)}
-                  className={`w-full min-h-14 rounded-xl border-2 flex items-center gap-3 px-5 py-3 text-left transition-all duration-150 active:scale-[0.99] ${
-                    isSelected
-                      ? "border-primary bg-primary/5"
-                      : "border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/40"
+                  disabled={soldOut}
+                  onClick={() => { if (!soldOut) setSelectedId(sauce.id); }}
+                  className={`w-full min-h-14 rounded-xl border-2 flex items-center gap-3 px-5 py-3 text-left transition-all duration-150 ${
+                    soldOut
+                      ? "border-border bg-muted opacity-50 cursor-not-allowed"
+                      : isSelected
+                        ? "border-primary bg-primary/5 active:scale-[0.99]"
+                        : "border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/40 active:scale-[0.99]"
                   }`}
                 >
                   <div
@@ -94,7 +101,12 @@ export function SauceModal({ dishName, initialSauceId, optional, sauces = BOX_SA
                   >
                     {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
-                  <span className="text-[15px] font-medium text-foreground">{sauce.label}</span>
+                  <span className={`text-[15px] font-medium ${soldOut ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                    {sauce.label}
+                  </span>
+                  {soldOut && (
+                    <span className="ml-auto text-[12px] font-medium text-muted-foreground">{tr.soldOut}</span>
+                  )}
                 </button>
               );
             })}
