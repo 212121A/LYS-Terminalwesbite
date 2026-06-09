@@ -332,9 +332,9 @@ export const menuData: MenuCategory[] = [
     name: "Bowls",
     images: ["menu-images/bowl.png"],
     items: [
-      { id: "24", number: "24", name: "Overnight Oats mit Haferflocken & Milch",                  price: 6.50, dishType: "overnightOatsMilch" },
-      { id: "25", number: "25", name: "Overnight Oats mit Haferflocken, Milch & Chiapudding",     price: 6.50, dishType: "overnightOatsChia" },
-      { id: "26", number: "26", name: "Chia Pudding",                                              price: 6.50, dishType: "chiaPudding" },
+      { id: "24", number: "24", name: "Overnight Oats mit Haferflocken & Milch",                  price: 6.50, dishType: "overnightOatsMilch", description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)" },
+      { id: "25", number: "25", name: "Overnight Oats mit Haferflocken, Milch & Chiapudding",     price: 6.50, dishType: "overnightOatsChia",  description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)" },
+      { id: "26", number: "26", name: "Chia Pudding",                                              price: 6.50, dishType: "chiaPudding",       description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)" },
     ],
   },
   {
@@ -374,3 +374,11 @@ export const DRINK_ITEM_IDS: ReadonlySet<string> = new Set(
     .filter((c) => DRINK_CATEGORY_IDS_FOR_ITEMS.has(c.id))
     .flatMap((c) => (c.items ?? []).map((i) => i.id)),
 );
+
+const itemIdsOfCategory = (categoryId: string): ReadonlySet<string> =>
+  new Set(menuData.find((c) => c.id === categoryId)?.items.map((i) => i.id) ?? []);
+
+/** Vorspeisen gehen ohne Soßen-/Optionen-Modal direkt in den Warenkorb. */
+export const VORSPEISEN_ITEM_IDS: ReadonlySet<string> = itemIdsOfCategory("vorspeisen");
+/** Bowls öffnen statt einer Soße das Topping-Modal (Früchte inkl. + Aufpreis-Toppings). */
+export const BOWL_ITEM_IDS: ReadonlySet<string> = itemIdsOfCategory("bowls");

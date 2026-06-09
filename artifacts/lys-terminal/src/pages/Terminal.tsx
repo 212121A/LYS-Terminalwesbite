@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
-import { menuData, DRINK_ITEM_IDS, type MenuItem } from "@/data/menu";
+import { menuData, DRINK_ITEM_IDS, BOWL_ITEM_IDS, VORSPEISEN_ITEM_IDS, type MenuItem } from "@/data/menu";
 import { BOX_ITEM_IDS, BOX_SAUCES, extraSauceOptionsFor, type BoxSauce } from "@/data/boxSauces";
+import { BOWL_TOPPINGS, type BowlTopping } from "@/data/bowlToppings";
 import { useCart, type CartItemEditMeta } from "@/store/cart";
 import { MenuItemCard } from "@/components/MenuItemCard";
 import { BoxItemCard } from "@/components/BoxItemCard";
@@ -9,6 +10,7 @@ import { CartPanel } from "@/components/CartPanel";
 import { CategoryNav } from "@/components/CategoryNav";
 import { PaymentModal } from "@/components/PaymentModal";
 import { SauceModal } from "@/components/SauceModal";
+import { ToppingsModal } from "@/components/ToppingsModal";
 import { ItemOptionsModal } from "@/components/ItemOptionsModal";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { AllergenLegendModal } from "@/components/AllergenLegendModal";
@@ -31,6 +33,14 @@ interface PendingExtraSauce {
   basePrice: number;
   baseSizeLabel?: string;
   initialSauceId?: BoxSauce["id"];
+}
+
+interface PendingToppings {
+  itemId: string;
+  name: string;
+  /** Basispreis der Bowl ohne Toppings. */
+  price: number;
+  initialToppingIds?: string[];
 }
 
 interface PendingItemOptions {
@@ -67,6 +77,7 @@ export function Terminal() {
   const [showCartMobile, setShowCartMobile] = useState(false);
   const [pendingSauce, setPendingSauce] = useState<PendingSauce | null>(null);
   const [pendingExtraSauce, setPendingExtraSauce] = useState<PendingExtraSauce | null>(null);
+  const [pendingToppings, setPendingToppings] = useState<PendingToppings | null>(null);
   const [pendingItemOptions, setPendingItemOptions] = useState<PendingItemOptions | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showAllergens, setShowAllergens] = useState(false);
@@ -141,12 +152,20 @@ export function Terminal() {
       return;
     }
 
+    // Bowls: statt einer Soße die Topping-Auswahl (Früchte inkl., Aufpreis-Toppings).
+    if (!sizeLabel && BOWL_ITEM_IDS.has(itemId)) {
+      setPendingToppings({ itemId, name, price });
+      return;
+    }
+
     // Übrige Speisen ohne eigene Soßen-Kategorie: optionale Extra-Soße.
-    // Soßen-Gerichte (Thai Curry, Süß-Sauer, Soja, Erdnuss, Matcha, Mango —
-    // alle mit Nudel/Reis-Wahl) bringen ihre Soße schon mit → kein Extra-Modal.
+    // Ausgenommen: Soßen-Gerichte mit Nudel/Reis-Wahl (bringen ihre Soße mit),
+    // Vorspeisen (gehen direkt in den Warenkorb) und Bowls (eigenes Topping-Modal).
     if (
       !DRINK_ITEM_IDS.has(itemId) &&
       !BOX_ITEM_IDS.has(itemId) &&
+      !BOWL_ITEM_IDS.has(itemId) &&
+      !VORSPEISEN_ITEM_IDS.has(itemId) &&
       !menuItem?.requiresCarbChoice
     ) {
       setPendingExtraSauce({ itemId, baseName: name, basePrice: price, baseSizeLabel: sizeLabel });
@@ -194,6 +213,15 @@ export function Terminal() {
       commitItem(itemId, baseName, basePrice, baseSizeLabel, edit);
     }
     setPendingExtraSauce(null);
+  };
+
+  const handleToppingsConfirm = (toppings: BowlTopping[], totalPrice: number) => {
+    if (!pendingToppings) return;
+    const { itemId, name, price } = pendingToppings;
+    const edit: CartItemEditMeta = { kind: "toppings", baseName: name, basePrice: price };
+    const label = toppings.map((t) => t.label).join(", ");
+    commitItem(itemId, label ? `${name} · ${label}` : name, totalPrice, label || undefined, edit);
+    setPendingToppings(null);
   };
 
   const handleItemOptionsConfirm = (selectionLabel: string, totalPrice: number) => {
@@ -250,6 +278,15 @@ export function Terminal() {
         baseSizeLabel: item.edit.baseSizeLabel,
         initialSauceId: currentSauce?.id,
       });
+    } else if (item.edit.kind === "toppings") {
+      const labels = (item.sizeLabel ?? "").split(", ").filter(Boolean);
+      const ids = BOWL_TOPPINGS.filter((t) => labels.includes(t.label)).map((t) => t.id);
+      setPendingToppings({
+        itemId: item.itemId,
+        name: item.edit.baseName,
+        price: item.edit.basePrice,
+        initialToppingIds: ids,
+      });
     }
   };
 
@@ -260,6 +297,11 @@ export function Terminal() {
 
   const cancelPendingExtraSauce = () => {
     setPendingExtraSauce(null);
+    setEditingCartId(null);
+  };
+
+  const cancelPendingToppings = () => {
+    setPendingToppings(null);
     setEditingCartId(null);
   };
 
@@ -609,6 +651,16 @@ export function Terminal() {
           sauces={extraSauceOptionsFor(pendingExtraSauce.itemId)}
           onClose={cancelPendingExtraSauce}
           onConfirm={handleExtraSauceConfirm}
+        />
+      )}
+
+      {pendingToppings && (
+        <ToppingsModal
+          dishName={pendingToppings.name}
+          basePrice={pendingToppings.price}
+          initialToppingIds={pendingToppings.initialToppingIds}
+          onClose={cancelPendingToppings}
+          onConfirm={handleToppingsConfirm}
         />
       )}
 

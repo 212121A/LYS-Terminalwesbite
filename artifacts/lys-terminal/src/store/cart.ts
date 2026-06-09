@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 
 export interface CartItemEditMeta {
-  kind: "sauce" | "options" | "extraSauce";
+  kind: "sauce" | "options" | "extraSauce" | "toppings";
   baseName: string;
   basePrice: number;
   profile?: "matcha" | "coffeeMilk";

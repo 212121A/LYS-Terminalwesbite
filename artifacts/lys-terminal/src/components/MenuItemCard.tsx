@@ -1,6 +1,6 @@
 import { useState, memo } from "react";
 import { Plus, Minus, Flame, Check } from "lucide-react";
-import { MenuItem, DRINK_ITEM_IDS } from "@/data/menu";
+import { MenuItem, DRINK_ITEM_IDS, VORSPEISEN_ITEM_IDS } from "@/data/menu";
 import { useLang } from "@/i18n/LanguageContext";
 import t from "@/i18n/translations";
 import { AllergenCodes } from "@/components/AllergenCodes";
@@ -138,11 +138,13 @@ function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: 
   const carbKitchen = carb === "nudel" ? t.de.carbNudel : t.de.carbReis;
   const variantLabel = item.requiresCarbChoice ? carbKitchen : undefined;
   const cartId = variantLabel ? `${item.id}-${variantLabel}` : item.id;
-  // Speisen ohne eigene Soßen-Kategorie öffnen beim „+" das (optionale) Soßen-Modal;
-  // daher kein Inline-Zähler, sondern nur ein „+"-Button (qty = 0). Soßen-Gerichte
-  // mit Nudel/Reis-Wahl (requiresCarbChoice) bringen ihre Soße schon mit → normaler Zähler.
+  // Speisen ohne eigene Soßen-Kategorie öffnen beim „+" ein Modal (Extra-Soße bzw.
+  // Bowls: Toppings); daher kein Inline-Zähler, sondern nur ein „+"-Button (qty = 0).
+  // Soßen-Gerichte mit Nudel/Reis-Wahl bringen ihre Soße schon mit und Vorspeisen
+  // haben gar keine Auswahl mehr → beide bekommen einen normalen Zähler.
   const needsModal =
-    item.optionProfile != null || (!DRINK_ITEM_IDS.has(item.id) && !item.requiresCarbChoice);
+    item.optionProfile != null ||
+    (!DRINK_ITEM_IDS.has(item.id) && !item.requiresCarbChoice && !VORSPEISEN_ITEM_IDS.has(item.id));
   const qty = needsModal ? 0 : quantityInCart(cartId);
   const addName = item.requiresCarbChoice ? `${displayName} · ${carbLabel}` : displayName;
   const handleAdd = () => onAdd(item.id, addName, item.price, variantLabel);
