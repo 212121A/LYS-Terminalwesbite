@@ -375,10 +375,15 @@ export const DRINK_ITEM_IDS: ReadonlySet<string> = new Set(
     .flatMap((c) => (c.items ?? []).map((i) => i.id)),
 );
 
-const itemIdsOfCategory = (categoryId: string): ReadonlySet<string> =>
-  new Set(menuData.find((c) => c.id === categoryId)?.items.map((i) => i.id) ?? []);
+const itemIdsOfCategory = (categoryId: string): string[] =>
+  menuData.find((c) => c.id === categoryId)?.items.map((i) => i.id) ?? [];
 
-/** Vorspeisen gehen ohne Soßen-/Optionen-Modal direkt in den Warenkorb. */
-export const VORSPEISEN_ITEM_IDS: ReadonlySet<string> = itemIdsOfCategory("vorspeisen");
+/** Items ohne Auswahl-Modal — gehen direkt in den Warenkorb: Vorspeisen sowie
+ *  die süßen Kem-/Kids-Artikel, bei denen eine Extra-Soße keinen Sinn ergibt. */
+export const DIRECT_ADD_ITEM_IDS: ReadonlySet<string> = new Set([
+  ...itemIdsOfCategory("vorspeisen"),
+  ...itemIdsOfCategory("kem"),
+  ...itemIdsOfCategory("kids"),
+]);
 /** Bowls öffnen statt einer Soße das Topping-Modal (Früchte inkl. + Aufpreis-Toppings). */
-export const BOWL_ITEM_IDS: ReadonlySet<string> = itemIdsOfCategory("bowls");
+export const BOWL_ITEM_IDS: ReadonlySet<string> = new Set(itemIdsOfCategory("bowls"));

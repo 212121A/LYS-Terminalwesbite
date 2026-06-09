@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
-import { menuData, DRINK_ITEM_IDS, VORSPEISEN_ITEM_IDS, type MenuItem } from "@/data/menu";
-import { BOX_ITEM_IDS, BOX_SAUCES, extraSauceOptionsFor, type BoxSauce } from "@/data/boxSauces";
+import { menuData, DRINK_ITEM_IDS, DIRECT_ADD_ITEM_IDS, type MenuItem } from "@/data/menu";
+import { BOX_ITEM_IDS, BOX_SAUCES, type BoxSauce } from "@/data/boxSauces";
 import { toppingsConfigFor, TOPPING_ITEM_IDS, selectedIdsFromLabel } from "@/data/toppings";
 import { useCart, type CartItemEditMeta } from "@/store/cart";
 import { MenuItemCard } from "@/components/MenuItemCard";
@@ -159,14 +159,15 @@ export function Terminal() {
       return;
     }
 
-    // Übrige Speisen ohne eigene Soßen-Kategorie: optionale Extra-Soße.
-    // Ausgenommen: Soßen-Gerichte mit Nudel/Reis-Wahl (bringen ihre Soße mit),
-    // Vorspeisen (gehen direkt in den Warenkorb) und Items mit Topping-Modal.
+    // Übrige Speisen ohne eigene Soßen-Kategorie: optionale Extra-Soße
+    // (aktuell nur noch Gebratener Reis). Ausgenommen: Soßen-Gerichte mit
+    // Nudel/Reis-Wahl (bringen ihre Soße mit), Items mit Topping-Modal sowie
+    // Vorspeisen/Kem/Kids (gehen direkt in den Warenkorb).
     if (
       !DRINK_ITEM_IDS.has(itemId) &&
       !BOX_ITEM_IDS.has(itemId) &&
       !TOPPING_ITEM_IDS.has(itemId) &&
-      !VORSPEISEN_ITEM_IDS.has(itemId) &&
+      !DIRECT_ADD_ITEM_IDS.has(itemId) &&
       !menuItem?.requiresCarbChoice
     ) {
       setPendingExtraSauce({ itemId, baseName: name, basePrice: price, baseSizeLabel: sizeLabel });
@@ -647,7 +648,6 @@ export function Terminal() {
           dishName={pendingExtraSauce.baseName}
           initialSauceId={pendingExtraSauce.initialSauceId}
           optional
-          sauces={extraSauceOptionsFor(pendingExtraSauce.itemId)}
           onClose={cancelPendingExtraSauce}
           onConfirm={handleExtraSauceConfirm}
         />

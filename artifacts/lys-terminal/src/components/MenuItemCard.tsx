@@ -1,6 +1,6 @@
 import { useState, memo } from "react";
 import { Plus, Minus, Flame, Check } from "lucide-react";
-import { MenuItem, DRINK_ITEM_IDS, VORSPEISEN_ITEM_IDS } from "@/data/menu";
+import { MenuItem, DRINK_ITEM_IDS, DIRECT_ADD_ITEM_IDS } from "@/data/menu";
 import { TOPPING_ITEM_IDS } from "@/data/toppings";
 import { useLang } from "@/i18n/LanguageContext";
 import t from "@/i18n/translations";
@@ -142,11 +142,11 @@ function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: 
   // Items, die beim „+" ein Modal öffnen (Extra-Soße, Bowl-Toppings, Smoothie-
   // Auswahl, Milch-Optionen), bekommen keinen Inline-Zähler, sondern nur einen
   // „+"-Button (qty = 0). Soßen-Gerichte mit Nudel/Reis-Wahl bringen ihre Soße
-  // schon mit und Vorspeisen haben keine Auswahl → beide mit normalem Zähler.
+  // schon mit; Vorspeisen/Kem/Kids haben keine Auswahl → alle mit normalem Zähler.
   const needsModal =
     item.optionProfile != null ||
     TOPPING_ITEM_IDS.has(item.id) ||
-    (!DRINK_ITEM_IDS.has(item.id) && !item.requiresCarbChoice && !VORSPEISEN_ITEM_IDS.has(item.id));
+    (!DRINK_ITEM_IDS.has(item.id) && !item.requiresCarbChoice && !DIRECT_ADD_ITEM_IDS.has(item.id));
   const qty = needsModal ? 0 : quantityInCart(cartId);
   const addName = item.requiresCarbChoice ? `${displayName} · ${carbLabel}` : displayName;
   const handleAdd = () => onAdd(item.id, addName, item.price, variantLabel);
