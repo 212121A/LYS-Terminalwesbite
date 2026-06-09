@@ -20,7 +20,7 @@ export const BOX_SAUCES: BoxSauce[] = [
 /** Süße Gerichte (Schoko Latte, Matcha-Latte mit Eis), bei denen in der
  *  optionalen Extra-Soßen-Auswahl die herzhaften Soßen Erdnuss/Matcha/Mango
  *  keinen Sinn ergeben und daher ausgeblendet werden. Bowls nutzen statt der
- *  Extra-Soße ein eigenes Topping-Modal (siehe bowlToppings.ts). */
+ *  Extra-Soße ein eigenes Topping-Modal (siehe toppings.ts). */
 const SWEET_ITEM_IDS: ReadonlySet<string> = new Set([
   "30", "31",       // Kem: Matcha Latte (mit Matcha-/Vanilleeis)
   "32",             // Kids: Schoko Latte

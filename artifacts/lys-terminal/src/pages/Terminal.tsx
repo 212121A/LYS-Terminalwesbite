@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
-import { menuData, DRINK_ITEM_IDS, BOWL_ITEM_IDS, VORSPEISEN_ITEM_IDS, type MenuItem } from "@/data/menu";
+import { menuData, DRINK_ITEM_IDS, VORSPEISEN_ITEM_IDS, type MenuItem } from "@/data/menu";
 import { BOX_ITEM_IDS, BOX_SAUCES, extraSauceOptionsFor, type BoxSauce } from "@/data/boxSauces";
-import { BOWL_TOPPINGS, type BowlTopping } from "@/data/bowlToppings";
+import { toppingsConfigFor, TOPPING_ITEM_IDS, selectedIdsFromLabel } from "@/data/toppings";
 import { useCart, type CartItemEditMeta } from "@/store/cart";
 import { MenuItemCard } from "@/components/MenuItemCard";
 import { BoxItemCard } from "@/components/BoxItemCard";
@@ -38,9 +38,9 @@ interface PendingExtraSauce {
 interface PendingToppings {
   itemId: string;
   name: string;
-  /** Basispreis der Bowl ohne Toppings. */
+  /** Basispreis ohne Toppings/Extras. */
   price: number;
-  initialToppingIds?: string[];
+  initialSelectedIds?: string[];
 }
 
 interface PendingItemOptions {
@@ -152,19 +152,20 @@ export function Terminal() {
       return;
     }
 
-    // Bowls: statt einer Soße die Topping-Auswahl (Früchte inkl., Aufpreis-Toppings).
-    if (!sizeLabel && BOWL_ITEM_IDS.has(itemId)) {
+    // Bowls & Smoothie: statt einer Soße ein Auswahl-Modal (Toppings bzw.
+    // Frucht + Extras mit Aufpreis).
+    if (!sizeLabel && TOPPING_ITEM_IDS.has(itemId)) {
       setPendingToppings({ itemId, name, price });
       return;
     }
 
     // Übrige Speisen ohne eigene Soßen-Kategorie: optionale Extra-Soße.
     // Ausgenommen: Soßen-Gerichte mit Nudel/Reis-Wahl (bringen ihre Soße mit),
-    // Vorspeisen (gehen direkt in den Warenkorb) und Bowls (eigenes Topping-Modal).
+    // Vorspeisen (gehen direkt in den Warenkorb) und Items mit Topping-Modal.
     if (
       !DRINK_ITEM_IDS.has(itemId) &&
       !BOX_ITEM_IDS.has(itemId) &&
-      !BOWL_ITEM_IDS.has(itemId) &&
+      !TOPPING_ITEM_IDS.has(itemId) &&
       !VORSPEISEN_ITEM_IDS.has(itemId) &&
       !menuItem?.requiresCarbChoice
     ) {
@@ -215,11 +216,10 @@ export function Terminal() {
     setPendingExtraSauce(null);
   };
 
-  const handleToppingsConfirm = (toppings: BowlTopping[], totalPrice: number) => {
+  const handleToppingsConfirm = (label: string, totalPrice: number) => {
     if (!pendingToppings) return;
     const { itemId, name, price } = pendingToppings;
     const edit: CartItemEditMeta = { kind: "toppings", baseName: name, basePrice: price };
-    const label = toppings.map((t) => t.label).join(", ");
     commitItem(itemId, label ? `${name} · ${label}` : name, totalPrice, label || undefined, edit);
     setPendingToppings(null);
   };
@@ -279,13 +279,12 @@ export function Terminal() {
         initialSauceId: currentSauce?.id,
       });
     } else if (item.edit.kind === "toppings") {
-      const labels = (item.sizeLabel ?? "").split(", ").filter(Boolean);
-      const ids = BOWL_TOPPINGS.filter((t) => labels.includes(t.label)).map((t) => t.id);
+      const config = toppingsConfigFor(item.itemId);
       setPendingToppings({
         itemId: item.itemId,
         name: item.edit.baseName,
         price: item.edit.basePrice,
-        initialToppingIds: ids,
+        initialSelectedIds: config ? selectedIdsFromLabel(config, item.sizeLabel) : [],
       });
     }
   };
@@ -654,11 +653,12 @@ export function Terminal() {
         />
       )}
 
-      {pendingToppings && (
+      {pendingToppings && toppingsConfigFor(pendingToppings.itemId) && (
         <ToppingsModal
           dishName={pendingToppings.name}
           basePrice={pendingToppings.price}
-          initialToppingIds={pendingToppings.initialToppingIds}
+          config={toppingsConfigFor(pendingToppings.itemId)!}
+          initialSelectedIds={pendingToppings.initialSelectedIds}
           onClose={cancelPendingToppings}
           onConfirm={handleToppingsConfirm}
         />
