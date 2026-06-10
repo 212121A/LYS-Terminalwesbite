@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { ALLERGENS, ADDITIVES } from "@/data/allergens";
 import { useLang } from "@/i18n/LanguageContext";
@@ -5,7 +6,7 @@ import { useLang } from "@/i18n/LanguageContext";
 export function AllergenLegendModal({ onClose }: { onClose: () => void }) {
   const { tr } = useLang();
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4"
       onClick={onClose}
@@ -65,6 +66,7 @@ export function AllergenLegendModal({ onClose }: { onClose: () => void }) {
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

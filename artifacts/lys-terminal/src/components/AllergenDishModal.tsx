@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { allergenLabel, additiveLabel } from "@/data/allergens";
 import { useLang } from "@/i18n/LanguageContext";
@@ -28,7 +29,7 @@ export function AllergenDishModal({
     { title: "Zusatzstoffe", codes: additives, labelFor: additiveLabel },
   ].filter((group) => group.codes.length > 0);
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4"
       onClick={onClose}
@@ -80,6 +81,7 @@ export function AllergenDishModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
