@@ -3,6 +3,8 @@ import { Plus } from "lucide-react";
 import { type BoxBaseItem } from "@/data/menu";
 import { useLang } from "@/i18n/LanguageContext";
 import { AllergenCodes } from "@/components/AllergenCodes";
+import { AllergenInfo } from "@/components/AllergenInfo";
+import { additivesForCarb } from "@/data/allergens";
 import { Price } from "@/components/Price";
 import { useAvailability } from "@/availability/AvailabilityContext";
 import { boxAvailabilityId } from "@/lib/availability";
@@ -50,6 +52,9 @@ function BoxItemCardBase({ item, onAdd, index = 0 }: BoxItemCardProps) {
   }
 
   const carbLabel = carb === "nudel" ? tr.carbNudel : tr.carbReis;
+  // Nudeln bringen E621 (g) mit, Reis nicht.
+  const allergenList = item.allergens ?? [];
+  const additiveList = additivesForCarb(item.additives, carb);
   const current = item.carbs[carb];
   const hasKlein = current.klein !== undefined && item.sizes.klein !== undefined;
 
@@ -68,10 +73,13 @@ function BoxItemCardBase({ item, onAdd, index = 0 }: BoxItemCardProps) {
       data-testid={`card-box-${item.id}`}
     >
       <div className="flex-1 min-w-0">
-        <h3 className="font-medium text-foreground text-[15px] min-[1600px]:text-[32px] leading-snug">
-          {baseName}
-        </h3>
-        <AllergenCodes allergens={item.allergens} additives={item.additives} />
+        <div className="flex items-center gap-2">
+          <h3 className="font-medium text-foreground text-[15px] min-[1600px]:text-[32px] leading-snug">
+            {baseName}
+          </h3>
+          <AllergenInfo dishName={baseName} allergens={allergenList} additives={additiveList} testId={`button-allergen-box-${item.id}`} />
+        </div>
+        <AllergenCodes allergens={allergenList} additives={additiveList} />
         <div
           role="radiogroup"
           aria-label={tr.carbNudel + " / " + tr.carbReis}

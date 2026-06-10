@@ -43,9 +43,21 @@ export function AllergenLegendModal({ onClose }: { onClose: () => void }) {
               </h3>
               <ul className="space-y-1.5">
                 {group.entries.map((e) => (
-                  <li key={e.code} className="flex items-baseline gap-2.5 text-[14px]">
-                    <span className="font-mono font-semibold text-primary w-5 shrink-0">{e.code}</span>
-                    <span className="text-foreground">{e.label}</span>
+                  <li key={e.code}>
+                    <div className="flex items-baseline gap-2.5 text-[14px]">
+                      <span className="font-mono font-semibold text-primary w-7 shrink-0">{e.code}</span>
+                      <span className="text-foreground">{e.label}</span>
+                    </div>
+                    {e.sub && (
+                      <ul className="mt-1 ml-7 space-y-1">
+                        {e.sub.map((s) => (
+                          <li key={s.code} className="flex items-baseline gap-2.5 text-[13px]">
+                            <span className="font-mono font-semibold text-primary/80 w-6 shrink-0">{s.code}</span>
+                            <span className="text-muted-foreground">{s.label}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </li>
                 ))}
               </ul>
