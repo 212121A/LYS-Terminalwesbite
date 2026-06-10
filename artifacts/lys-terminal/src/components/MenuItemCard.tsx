@@ -4,7 +4,6 @@ import { MenuItem, DRINK_ITEM_IDS, DIRECT_ADD_ITEM_IDS } from "@/data/menu";
 import { TOPPING_ITEM_IDS } from "@/data/toppings";
 import { useLang } from "@/i18n/LanguageContext";
 import t from "@/i18n/translations";
-import { AllergenCodes } from "@/components/AllergenCodes";
 import { AllergenInfo } from "@/components/AllergenInfo";
 import { additivesForCarb } from "@/data/allergens";
 import { Price } from "@/components/Price";
@@ -86,7 +85,6 @@ function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: 
           {item.description && (
             <p className="text-muted-foreground text-[13px] min-[1600px]:text-[22px] mt-1 leading-relaxed">{item.description}</p>
           )}
-          <AllergenCodes allergens={allergenList} additives={additiveList} />
         </div>
         <div className="flex flex-col gap-2">
           {item.sizeOptions.map((size) => {
@@ -182,7 +180,6 @@ function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: 
         {item.description && (
           <p className="text-muted-foreground text-[13px] min-[1600px]:text-[22px] mt-0.5 leading-relaxed">{item.description}</p>
         )}
-        <AllergenCodes allergens={allergenList} additives={additiveList} />
         {item.requiresCarbChoice && (
           <div
             role="radiogroup"

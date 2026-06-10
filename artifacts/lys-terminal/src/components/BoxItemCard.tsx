@@ -2,7 +2,6 @@ import { useState, memo } from "react";
 import { Plus } from "lucide-react";
 import { type BoxBaseItem } from "@/data/menu";
 import { useLang } from "@/i18n/LanguageContext";
-import { AllergenCodes } from "@/components/AllergenCodes";
 import { AllergenInfo } from "@/components/AllergenInfo";
 import { additivesForCarb } from "@/data/allergens";
 import { Price } from "@/components/Price";
@@ -79,7 +78,6 @@ function BoxItemCardBase({ item, onAdd, index = 0 }: BoxItemCardProps) {
           </h3>
           <AllergenInfo dishName={baseName} allergens={allergenList} additives={additiveList} testId={`button-allergen-box-${item.id}`} />
         </div>
-        <AllergenCodes allergens={allergenList} additives={additiveList} />
         <div
           role="radiogroup"
           aria-label={tr.carbNudel + " / " + tr.carbReis}
