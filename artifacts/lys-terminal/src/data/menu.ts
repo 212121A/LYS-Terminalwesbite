@@ -356,9 +356,12 @@ export const menuData: MenuCategory[] = [
     name: "Bowls",
     images: ["menu-images/bowl.png"],
     items: [
-      { id: "24", number: "24", name: "Overnight Oats mit Haferflocken & Milch",                  price: 6.50, dishType: "overnightOatsMilch", description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: ["1", "7"], additives: [] },
-      { id: "25", number: "25", name: "Overnight Oats mit Haferflocken, Milch & Chiapudding",     price: 6.50, dishType: "overnightOatsChia",  description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: ["1", "7"], additives: [] },
-      { id: "26", number: "26", name: "Chia Pudding",                                              price: 6.50, dishType: "chiaPudding",       description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: ["7"], additives: [] },
+      { id: "24", number: "24", name: "Overnight Oats mit Haferflocken & Milch", price: 6.50, dishType: "overnightOatsMilch", description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: ["1", "7"], additives: [] },
+      { id: "25", number: "25", name: "Joghurt Bowl",   price: 6.50, dishType: "joghurtBowl",  description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: ["7"], additives: [] },
+      { id: "26", number: "26", name: "Protein Bowl",   price: 6.50, dishType: "proteinBowl",  description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: ["7"], additives: [] },
+      { id: "27", number: "27", name: "Açaí Bowl",      price: 6.50, dishType: "acaiBowl",     description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: [], additives: [] },
+      { id: "28", number: "28", name: "Smoothie Bowl",  price: 6.50, dishType: "smoothieBowl", description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: [], additives: [] },
+      { id: "29", number: "29", name: "Chia Pudding",   price: 6.50, dishType: "chiaPudding",  description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: ["7"], additives: [] },
     ],
   },
   {
