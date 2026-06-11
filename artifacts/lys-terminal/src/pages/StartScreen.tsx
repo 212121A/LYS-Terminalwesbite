@@ -37,7 +37,7 @@ export function StartScreen() {
           fontFamily: "'Poppins', sans-serif",
           fontWeight: 700,
           fontStyle: "italic",
-          color: "rgba(226, 226, 226, 0.9)",
+          color: "rgba(226, 226, 226, 0.4)",
         }}
       >
         designed by revenueflowsystems.de
