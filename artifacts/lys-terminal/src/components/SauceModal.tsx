@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { X } from "lucide-react";
-import { BOX_SAUCES, type BoxSauce } from "@/data/boxSauces";
+import { X, Check } from "lucide-react";
+import { BOX_SAUCES, NO_SAUCE_LABEL, NO_VEG_LABEL, type BoxSauce } from "@/data/boxSauces";
 import { useLang } from "@/i18n/LanguageContext";
 import { useAvailability } from "@/availability/AvailabilityContext";
 import { sauceAvailabilityId } from "@/lib/availability";
@@ -12,35 +12,46 @@ interface SauceModalProps {
   dishName: string;
   /** Vorauswahl beim Bearbeiten einer bestehenden Warenkorb-Zeile. */
   initialSauceId?: BoxSauce["id"];
+  /** Edit-Restore: war „Keine Soße" gewählt (nur Box-Pflichtmodus). */
+  initialNoSauce?: boolean;
+  /** Edit-Restore: war „Ohne Gemüse" gewählt. */
+  initialNoVeg?: boolean;
   /** Optionaler Modus für Nicht-Box-Speisen: zusätzliche „Ohne extra Soße"-Option,
    *  Bestätigen immer möglich (gibt dann null zurück). */
   optional?: boolean;
+  /** Box-Pflichtmodus: zusätzliche „Keine Soße"-Option am Ende der Liste. */
+  allowNoSauce?: boolean;
+  /** Zeigt den „Ohne Gemüse"-Schalter an. */
+  allowNoVeg?: boolean;
   /** Auswählbare Soßen. Default: alle. Süße Gerichte schränken die Liste ein. */
   sauces?: BoxSauce[];
   onClose: () => void;
-  onConfirm: (sauce: BoxSauce | null) => void;
+  onConfirm: (sauce: BoxSauce | null, withoutVeg: boolean) => void;
 }
 
-export function SauceModal({ dishName, initialSauceId, optional, sauces = BOX_SAUCES, onClose, onConfirm }: SauceModalProps) {
+export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNoVeg, optional, allowNoSauce, allowNoVeg, sauces = BOX_SAUCES, onClose, onConfirm }: SauceModalProps) {
   const { tr } = useLang();
   const { isItemSoldOut } = useAvailability();
   const [selectedId, setSelectedId] = useState<string | null>(
-    () => initialSauceId ?? (optional ? NONE : null),
+    () => initialSauceId ?? ((optional || initialNoSauce) ? NONE : null),
   );
+  const [withoutVeg, setWithoutVeg] = useState<boolean>(() => initialNoVeg ?? false);
 
   const handleConfirm = () => {
     if (selectedId === null) return;
     if (selectedId === NONE) {
-      onConfirm(null);
+      onConfirm(null, withoutVeg);
       return;
     }
     const sauce = BOX_SAUCES.find((s) => s.id === selectedId);
-    if (sauce) onConfirm(sauce);
+    if (sauce) onConfirm(sauce, withoutVeg);
   };
 
   const options = optional
     ? [{ id: NONE, label: tr.extraSauceNone }, ...sauces]
-    : sauces;
+    : allowNoSauce
+      ? [...sauces, { id: NONE, label: NO_SAUCE_LABEL }]
+      : sauces;
 
   return (
     <div
@@ -110,6 +121,28 @@ export function SauceModal({ dishName, initialSauceId, optional, sauces = BOX_SA
                 </button>
               );
             })}
+
+            {allowNoVeg && (
+              <button
+                type="button"
+                data-testid="button-without-veg"
+                onClick={() => setWithoutVeg((v) => !v)}
+                className={`w-full min-h-14 rounded-xl border-2 flex items-center gap-3 px-5 py-3 text-left transition-all duration-150 ${
+                  withoutVeg
+                    ? "border-primary bg-primary/5 active:scale-[0.99]"
+                    : "border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/40 active:scale-[0.99]"
+                }`}
+              >
+                <div
+                  className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-colors ${
+                    withoutVeg ? "border-primary bg-primary" : "border-muted-foreground/40"
+                  }`}
+                >
+                  {withoutVeg && <Check size={14} strokeWidth={3} className="text-primary-foreground" />}
+                </div>
+                <span className="text-[15px] font-medium text-foreground">{NO_VEG_LABEL}</span>
+              </button>
+            )}
           </div>
 
           <div className="flex gap-2">

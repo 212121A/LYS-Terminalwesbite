@@ -17,6 +17,11 @@ export const BOX_SAUCES: BoxSauce[] = [
   { id: "mango",           label: "Mango Soße" },
 ];
 
+/** Modifikatoren für Soßen-Gerichte. Sprachneutral-deutsch wie die Soßen-Labels,
+ *  damit sie unverändert über das `sizeLabel` ans Küchen-Dashboard gehen. */
+export const NO_SAUCE_LABEL = "Keine Soße";
+export const NO_VEG_LABEL = "Ohne Gemüse";
+
 /** Alle Warenkorb-Basis-IDs, die eine Soßen-Auswahl erzwingen (GN1–GN7, KN1/KN2,
  *  GR1–GR7, KR1/KR2). Wird in Terminal.tsx genutzt, um beim Klick auf „+"
  *  statt direkt in den Warenkorb das Soßen-Modal zu öffnen. */

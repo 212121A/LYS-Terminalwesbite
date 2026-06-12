@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
 import { menuData, DRINK_ITEM_IDS, DIRECT_ADD_ITEM_IDS, type MenuItem } from "@/data/menu";
-import { BOX_ITEM_IDS, BOX_SAUCES, type BoxSauce } from "@/data/boxSauces";
+import { BOX_ITEM_IDS, BOX_SAUCES, NO_SAUCE_LABEL, NO_VEG_LABEL, type BoxSauce } from "@/data/boxSauces";
 import { toppingsConfigFor, TOPPING_ITEM_IDS, selectedIdsFromLabel } from "@/data/toppings";
 import { useCart, type CartItemEditMeta } from "@/store/cart";
 import { MenuItemCard } from "@/components/MenuItemCard";
@@ -25,6 +25,8 @@ interface PendingSauce {
   name: string;
   price: number;
   initialSauceId?: BoxSauce["id"];
+  initialNoSauce?: boolean;
+  initialNoVeg?: boolean;
 }
 
 interface PendingExtraSauce {
@@ -33,6 +35,7 @@ interface PendingExtraSauce {
   basePrice: number;
   baseSizeLabel?: string;
   initialSauceId?: BoxSauce["id"];
+  initialNoVeg?: boolean;
 }
 
 interface PendingToppings {
@@ -65,6 +68,17 @@ const FOOD_CATEGORIES = (() => {
   ];
 })();
 type MenuView = "food" | "drinks";
+
+/** Zerlegt ein Soßen-`sizeLabel` (z. B. „Sojasoße · Ohne Gemüse") für den
+ *  Edit-Restore in Soße, „Keine Soße" und „Ohne Gemüse". */
+function parseSauceSizeLabel(sizeLabel?: string) {
+  const parts = (sizeLabel ?? "").split(" · ").map((p) => p.trim()).filter(Boolean);
+  return {
+    sauce: BOX_SAUCES.find((s) => parts.includes(s.label)) ?? null,
+    noSauce: parts.includes(NO_SAUCE_LABEL),
+    withoutVeg: parts.includes(NO_VEG_LABEL),
+  };
+}
 
 export function Terminal() {
   const [, setLocation] = useLocation();
@@ -192,27 +206,33 @@ export function Terminal() {
     setEditingQty(1);
   };
 
-  const handleSauceConfirm = (sauce: BoxSauce | null) => {
-    if (!pendingSauce || !sauce) return;
+  const handleSauceConfirm = (sauce: BoxSauce | null, withoutVeg: boolean) => {
+    if (!pendingSauce) return;
+    const parts = [sauce ? sauce.label : NO_SAUCE_LABEL, withoutVeg ? NO_VEG_LABEL : null]
+      .filter(Boolean) as string[];
+    const sizeLabel = parts.join(" · ");
     commitItem(
       pendingSauce.itemId,
-      `${pendingSauce.name} · ${sauce.label}`,
+      `${pendingSauce.name} · ${sizeLabel}`,
       pendingSauce.price,
-      sauce.label,
+      sizeLabel,
       { kind: "sauce", baseName: pendingSauce.name, basePrice: pendingSauce.price },
     );
     setPendingSauce(null);
   };
 
-  const handleExtraSauceConfirm = (sauce: BoxSauce | null) => {
+  const handleExtraSauceConfirm = (sauce: BoxSauce | null, withoutVeg: boolean) => {
     if (!pendingExtraSauce) return;
     const { itemId, baseName, basePrice, baseSizeLabel } = pendingExtraSauce;
     const edit: CartItemEditMeta = { kind: "extraSauce", baseName, basePrice, baseSizeLabel };
-    if (sauce) {
-      const newSizeLabel = baseSizeLabel ? `${baseSizeLabel} · ${sauce.label}` : sauce.label;
-      commitItem(itemId, `${baseName} · ${sauce.label}`, basePrice, newSizeLabel, edit);
-    } else {
+    const extraParts = [sauce ? sauce.label : null, withoutVeg ? NO_VEG_LABEL : null]
+      .filter(Boolean) as string[];
+    if (extraParts.length === 0) {
       commitItem(itemId, baseName, basePrice, baseSizeLabel, edit);
+    } else {
+      const newSizeLabel = [baseSizeLabel, ...extraParts].filter(Boolean).join(" · ");
+      const newName = [baseName, ...extraParts].join(" · ");
+      commitItem(itemId, newName, basePrice, newSizeLabel, edit);
     }
     setPendingExtraSauce(null);
   };
@@ -249,12 +269,14 @@ export function Terminal() {
     setEditingCartId(cartId);
     setEditingQty(item.quantity);
     if (item.edit.kind === "sauce") {
-      const sauce = BOX_SAUCES.find((s) => s.label === item.sizeLabel);
+      const parsed = parseSauceSizeLabel(item.sizeLabel);
       setPendingSauce({
         itemId: item.itemId,
         name: item.edit.baseName,
         price: item.edit.basePrice,
-        initialSauceId: sauce?.id,
+        initialSauceId: parsed.sauce?.id,
+        initialNoSauce: parsed.noSauce,
+        initialNoVeg: parsed.withoutVeg,
       });
     } else if (item.edit.kind === "options" && item.edit.profile) {
       const parts = (item.sizeLabel ?? "").split(" · ");
@@ -269,15 +291,14 @@ export function Terminal() {
         initialMilkId: milkLabel?.toLowerCase(),
       });
     } else if (item.edit.kind === "extraSauce") {
-      const currentSauce = BOX_SAUCES.find(
-        (s) => item.sizeLabel === s.label || item.sizeLabel?.endsWith(` · ${s.label}`),
-      );
+      const parsed = parseSauceSizeLabel(item.sizeLabel);
       setPendingExtraSauce({
         itemId: item.itemId,
         baseName: item.edit.baseName,
         basePrice: item.edit.basePrice,
         baseSizeLabel: item.edit.baseSizeLabel,
-        initialSauceId: currentSauce?.id,
+        initialSauceId: parsed.sauce?.id,
+        initialNoVeg: parsed.withoutVeg,
       });
     } else if (item.edit.kind === "toppings") {
       const config = toppingsConfigFor(item.itemId);
@@ -638,6 +659,10 @@ export function Terminal() {
         <SauceModal
           dishName={pendingSauce.name}
           initialSauceId={pendingSauce.initialSauceId}
+          initialNoSauce={pendingSauce.initialNoSauce}
+          initialNoVeg={pendingSauce.initialNoVeg}
+          allowNoSauce
+          allowNoVeg
           onClose={cancelPendingSauce}
           onConfirm={handleSauceConfirm}
         />
@@ -647,7 +672,9 @@ export function Terminal() {
         <SauceModal
           dishName={pendingExtraSauce.baseName}
           initialSauceId={pendingExtraSauce.initialSauceId}
+          initialNoVeg={pendingExtraSauce.initialNoVeg}
           optional
+          allowNoVeg
           onClose={cancelPendingExtraSauce}
           onConfirm={handleExtraSauceConfirm}
         />
