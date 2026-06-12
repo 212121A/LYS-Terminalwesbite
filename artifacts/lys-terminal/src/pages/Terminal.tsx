@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
 import { menuData, DRINK_ITEM_IDS, DIRECT_ADD_ITEM_IDS, type MenuItem } from "@/data/menu";
-import { BOX_ITEM_IDS, BOX_SAUCES, NO_SAUCE_LABEL, NO_VEG_LABEL, type BoxSauce } from "@/data/boxSauces";
+import { BOX_ITEM_IDS, BOX_SAUCES, BOX_VEG_ITEM_IDS, NO_SAUCE_LABEL, NO_VEG_LABEL, type BoxSauce } from "@/data/boxSauces";
 import { toppingsConfigFor, TOPPING_ITEM_IDS, selectedIdsFromLabel } from "@/data/toppings";
 import { useCart, type CartItemEditMeta } from "@/store/cart";
 import { MenuItemCard } from "@/components/MenuItemCard";
@@ -662,7 +662,7 @@ export function Terminal() {
           initialNoSauce={pendingSauce.initialNoSauce}
           initialNoVeg={pendingSauce.initialNoVeg}
           allowNoSauce
-          allowNoVeg
+          allowNoVeg={BOX_VEG_ITEM_IDS.has(pendingSauce.itemId)}
           onClose={cancelPendingSauce}
           onConfirm={handleSauceConfirm}
         />

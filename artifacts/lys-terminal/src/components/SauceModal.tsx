@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Check } from "lucide-react";
+import { X, Check, Ban } from "lucide-react";
 import { BOX_SAUCES, NO_SAUCE_LABEL, NO_VEG_LABEL, type BoxSauce } from "@/data/boxSauces";
 import { useLang } from "@/i18n/LanguageContext";
 import { useAvailability } from "@/availability/AvailabilityContext";
@@ -47,11 +47,8 @@ export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNo
     if (sauce) onConfirm(sauce, withoutVeg);
   };
 
-  const options = optional
-    ? [{ id: NONE, label: tr.extraSauceNone }, ...sauces]
-    : allowNoSauce
-      ? [...sauces, { id: NONE, label: NO_SAUCE_LABEL }]
-      : sauces;
+  const showNoSauce = optional || allowNoSauce;
+  const noSauceLabel = optional ? tr.extraSauceNone : NO_SAUCE_LABEL;
 
   return (
     <div
@@ -87,10 +84,10 @@ export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNo
         </div>
 
         <div className="px-6 pt-4 pb-6">
-          <div className="space-y-2.5 mb-5">
-            {options.map((sauce) => {
+          <div className="space-y-2.5 mb-4">
+            {sauces.map((sauce) => {
               const isSelected = selectedId === sauce.id;
-              const soldOut = sauce.id !== NONE && isItemSoldOut(sauceAvailabilityId(sauce as BoxSauce));
+              const soldOut = isItemSoldOut(sauceAvailabilityId(sauce));
               return (
                 <button
                   key={sauce.id}
@@ -121,29 +118,49 @@ export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNo
                 </button>
               );
             })}
+          </div>
 
-            {allowNoVeg && (
-              <button
-                type="button"
-                data-testid="button-without-veg"
-                onClick={() => setWithoutVeg((v) => !v)}
-                className={`w-full min-h-14 rounded-xl border-2 flex items-center gap-3 px-5 py-3 text-left transition-all duration-150 ${
-                  withoutVeg
-                    ? "border-primary bg-primary/5 active:scale-[0.99]"
-                    : "border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/40 active:scale-[0.99]"
-                }`}
-              >
-                <div
-                  className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-colors ${
-                    withoutVeg ? "border-primary bg-primary" : "border-muted-foreground/40"
+          {(showNoSauce || allowNoVeg) && (
+            <div className="space-y-2.5 mb-5 pt-4 mt-1 border-t border-border">
+              {showNoSauce && (
+                <button
+                  type="button"
+                  data-testid="button-sauce-none"
+                  onClick={() => setSelectedId(NONE)}
+                  className={`w-full min-h-14 rounded-xl border-2 border-dashed flex items-center gap-3 px-5 py-3 text-left transition-all duration-150 active:scale-[0.99] ${
+                    selectedId === NONE
+                      ? "border-primary bg-primary/10"
+                      : "border-muted-foreground/30 bg-muted/40 hover:border-muted-foreground/50 hover:bg-muted/60"
                   }`}
                 >
-                  {withoutVeg && <Check size={14} strokeWidth={3} className="text-primary-foreground" />}
-                </div>
-                <span className="text-[15px] font-medium text-foreground">{NO_VEG_LABEL}</span>
-              </button>
-            )}
-          </div>
+                  <Ban size={20} className={`shrink-0 ${selectedId === NONE ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className="text-[15px] font-semibold text-foreground">{noSauceLabel}</span>
+                </button>
+              )}
+
+              {allowNoVeg && (
+                <button
+                  type="button"
+                  data-testid="button-without-veg"
+                  onClick={() => setWithoutVeg((v) => !v)}
+                  className={`w-full min-h-14 rounded-xl border-2 border-dashed flex items-center gap-3 px-5 py-3 text-left transition-all duration-150 active:scale-[0.99] ${
+                    withoutVeg
+                      ? "border-primary bg-primary/10"
+                      : "border-muted-foreground/30 bg-muted/40 hover:border-muted-foreground/50 hover:bg-muted/60"
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-colors ${
+                      withoutVeg ? "border-primary bg-primary" : "border-muted-foreground/40"
+                    }`}
+                  >
+                    {withoutVeg && <Check size={14} strokeWidth={3} className="text-primary-foreground" />}
+                  </div>
+                  <span className="text-[15px] font-semibold text-foreground">{NO_VEG_LABEL}</span>
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-2">
             <button
