@@ -8,8 +8,8 @@
  * den Preisen, die ans Küchen-Backend (n8n) gesendet werden.
  */
 
-/** Schalter für die Eröffnungswoche. Nach dem 14.06. auf `false` setzen. */
-export const ACTIVE = true;
+/** Schalter für die Eröffnungswoche. Aktion beendet — Rabatt aus. */
+export const ACTIVE = false;
 
 export const DISCOUNT_PERCENT = 20;
 
