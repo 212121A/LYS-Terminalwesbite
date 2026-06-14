@@ -30,18 +30,6 @@ export function StartScreen() {
           <LanguageSelector />
         </div>
       </div>
-
-      <span
-        className="absolute bottom-3 right-4 z-10 select-none text-[11px] tracking-tight min-[1600px]:bottom-5 min-[1600px]:right-6 min-[1600px]:text-[15px]"
-        style={{
-          fontFamily: "'Poppins', sans-serif",
-          fontWeight: 700,
-          fontStyle: "italic",
-          color: "rgba(226, 226, 226, 0.4)",
-        }}
-      >
-        designed by revenueflowsystems.de
-      </span>
     </div>
   );
 }
