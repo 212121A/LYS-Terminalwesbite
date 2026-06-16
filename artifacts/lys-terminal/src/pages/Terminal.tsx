@@ -38,6 +38,20 @@ interface PendingExtraSauce {
   initialNoVeg?: boolean;
 }
 
+/** Soßen-Gericht (C/B/S/E/M) mit fester Soße: Modifier-Modal für „Keine Soße"
+ *  und „Ohne Gemüse". Carb (Nudel/Reis) kommt schon von der Card mit. */
+interface PendingSauceDish {
+  itemId: string;
+  /** Anzeigename inkl. Carb, ohne Modifikatoren (z. B. „Hähnchen … · Nudel"). */
+  baseName: string;
+  basePrice: number;
+  /** Deutsches Carb-Label fürs `sizeLabel` (Küche): „Nudel" oder „Reis". */
+  carbLabel: string;
+  allowNoVeg: boolean;
+  initialNoSauce?: boolean;
+  initialNoVeg?: boolean;
+}
+
 interface PendingToppings {
   itemId: string;
   name: string;
@@ -91,6 +105,7 @@ export function Terminal() {
   const [showCartMobile, setShowCartMobile] = useState(false);
   const [pendingSauce, setPendingSauce] = useState<PendingSauce | null>(null);
   const [pendingExtraSauce, setPendingExtraSauce] = useState<PendingExtraSauce | null>(null);
+  const [pendingSauceDish, setPendingSauceDish] = useState<PendingSauceDish | null>(null);
   const [pendingToppings, setPendingToppings] = useState<PendingToppings | null>(null);
   const [pendingItemOptions, setPendingItemOptions] = useState<PendingItemOptions | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -173,6 +188,21 @@ export function Terminal() {
       return;
     }
 
+    // Soßen-Gerichte (C/B/S/E/M) mit Carb-Wahl: feste Soße aus der Kategorie,
+    // aber „Keine Soße" und „Ohne Gemüse" wählbar. Die Card liefert den Carb
+    // (Nudel/Reis) bereits als deutsches `sizeLabel`. Mehrfach-„+" aus dem
+    // Warenkorb ruft addItem direkt und landet daher nicht hier.
+    if (menuItem?.requiresCarbChoice && sizeLabel) {
+      setPendingSauceDish({
+        itemId,
+        baseName: name,
+        basePrice: price,
+        carbLabel: sizeLabel,
+        allowNoVeg: menuItem.dishType !== "gemüse",
+      });
+      return;
+    }
+
     // Übrige Speisen ohne eigene Soßen-Kategorie: optionale Extra-Soße
     // (aktuell nur noch Gebratener Reis). Ausgenommen: Soßen-Gerichte mit
     // Nudel/Reis-Wahl (bringen ihre Soße mit), Items mit Topping-Modal sowie
@@ -235,6 +265,22 @@ export function Terminal() {
       commitItem(itemId, newName, basePrice, newSizeLabel, edit);
     }
     setPendingExtraSauce(null);
+  };
+
+  const handleSauceDishConfirm = (_sauce: BoxSauce | null, withoutVeg: boolean, noSauce: boolean) => {
+    if (!pendingSauceDish) return;
+    const { itemId, baseName, basePrice, carbLabel } = pendingSauceDish;
+    const mods = [noSauce ? NO_SAUCE_LABEL : null, withoutVeg ? NO_VEG_LABEL : null]
+      .filter(Boolean) as string[];
+    const sizeLabel = [carbLabel, ...mods].join(" · ");
+    const name = [baseName, ...mods].join(" · ");
+    commitItem(itemId, name, basePrice, sizeLabel, {
+      kind: "sauceDish",
+      baseName,
+      basePrice,
+      baseSizeLabel: carbLabel,
+    });
+    setPendingSauceDish(null);
   };
 
   const handleToppingsConfirm = (label: string, totalPrice: number) => {
@@ -300,6 +346,17 @@ export function Terminal() {
         initialSauceId: parsed.sauce?.id,
         initialNoVeg: parsed.withoutVeg,
       });
+    } else if (item.edit.kind === "sauceDish") {
+      const parsed = parseSauceSizeLabel(item.sizeLabel);
+      setPendingSauceDish({
+        itemId: item.itemId,
+        baseName: item.edit.baseName,
+        basePrice: item.edit.basePrice,
+        carbLabel: item.edit.baseSizeLabel ?? "",
+        allowNoVeg: menuItemById.get(item.itemId)?.dishType !== "gemüse",
+        initialNoSauce: parsed.noSauce,
+        initialNoVeg: parsed.withoutVeg,
+      });
     } else if (item.edit.kind === "toppings") {
       const config = toppingsConfigFor(item.itemId);
       setPendingToppings({
@@ -318,6 +375,11 @@ export function Terminal() {
 
   const cancelPendingExtraSauce = () => {
     setPendingExtraSauce(null);
+    setEditingCartId(null);
+  };
+
+  const cancelPendingSauceDish = () => {
+    setPendingSauceDish(null);
     setEditingCartId(null);
   };
 
@@ -677,6 +739,19 @@ export function Terminal() {
           allowNoVeg
           onClose={cancelPendingExtraSauce}
           onConfirm={handleExtraSauceConfirm}
+        />
+      )}
+
+      {pendingSauceDish && (
+        <SauceModal
+          dishName={pendingSauceDish.baseName}
+          modifiersOnly
+          allowNoSauce
+          allowNoVeg={pendingSauceDish.allowNoVeg}
+          initialNoSauce={pendingSauceDish.initialNoSauce}
+          initialNoVeg={pendingSauceDish.initialNoVeg}
+          onClose={cancelPendingSauceDish}
+          onConfirm={handleSauceDishConfirm}
         />
       )}
 

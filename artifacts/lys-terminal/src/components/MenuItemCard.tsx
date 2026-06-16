@@ -147,13 +147,13 @@ function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: 
   const variantLabel = item.requiresCarbChoice ? carbKitchen : undefined;
   const cartId = variantLabel ? `${item.id}-${variantLabel}` : item.id;
   // Items, die beim „+" ein Modal öffnen (Extra-Soße, Bowl-Toppings, Smoothie-
-  // Auswahl, Milch-Optionen), bekommen keinen Inline-Zähler, sondern nur einen
-  // „+"-Button (qty = 0). Soßen-Gerichte mit Nudel/Reis-Wahl bringen ihre Soße
-  // schon mit; Vorspeisen/Kem/Kids haben keine Auswahl → alle mit normalem Zähler.
+  // Auswahl, Milch-Optionen, Soßen-Gerichte mit „Keine Soße"/„Ohne Gemüse"),
+  // bekommen keinen Inline-Zähler, sondern nur einen „+"-Button (qty = 0).
+  // Vorspeisen/Kem/Kids haben keine Auswahl → normaler Zähler.
   const needsModal =
     item.optionProfile != null ||
     TOPPING_ITEM_IDS.has(item.id) ||
-    (!DRINK_ITEM_IDS.has(item.id) && !item.requiresCarbChoice && !DIRECT_ADD_ITEM_IDS.has(item.id));
+    (!DRINK_ITEM_IDS.has(item.id) && !DIRECT_ADD_ITEM_IDS.has(item.id));
   const qty = needsModal ? 0 : quantityInCart(cartId);
   const addName = item.requiresCarbChoice ? `${displayName} · ${carbLabel}` : displayName;
   const handleAdd = () => onAdd(item.id, addName, item.price, variantLabel);

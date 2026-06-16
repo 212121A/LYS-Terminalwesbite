@@ -1,12 +1,12 @@
 import { useState, useCallback } from "react";
 
 export interface CartItemEditMeta {
-  kind: "sauce" | "options" | "extraSauce" | "toppings";
+  kind: "sauce" | "options" | "extraSauce" | "toppings" | "sauceDish";
   baseName: string;
   basePrice: number;
   profile?: "matcha" | "coffeeMilk";
-  /** Bei „extraSauce": Carb-/Größen-Label ohne Soße, um beim Bearbeiten den
-   *  Basis-Zustand wiederherzustellen. */
+  /** Bei „extraSauce" und „sauceDish": Carb-/Größen-Label ohne Modifikatoren,
+   *  um beim Bearbeiten den Basis-Zustand wiederherzustellen. */
   baseSizeLabel?: string;
 }
 

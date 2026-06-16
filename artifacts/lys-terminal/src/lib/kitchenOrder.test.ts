@@ -43,6 +43,12 @@ const e5 = toKitchenLineItem(index, cart({ itemId: "e5", sizeLabel: "Reis" }));
 check("e5.name", e5.name, "Ente mit Gemüse · Reis");
 check("e5.id", e5.id, "e5 Reis");
 
+// 2b) Soßen-Gericht mit Modifikatoren („Keine Soße"/„Ohne Gemüse" sind bereits
+//     deutsche Konstanten im sizeLabel) → Küche bekommt alles deutsch angehängt.
+const b2 = toKitchenLineItem(index, cart({ itemId: "b2", sizeLabel: "Nudel · Keine Soße · Ohne Gemüse" }));
+check("b2.name", b2.name, "Hähnchenfleisch mit Gemüse · Nudel · Keine Soße · Ohne Gemüse");
+check("b2.id", b2.id, "b2 Nudel · Keine Soße · Ohne Gemüse");
+
 // 3) Box: Größe+Beilage stecken im Code, Soße ist bereits deutsch.
 const gn3 = toKitchenLineItem(index, cart({ itemId: "GN3", sizeLabel: "Sojasoße", price: 6, quantity: 2 }));
 check("GN3.number", gn3.number, "GN3");

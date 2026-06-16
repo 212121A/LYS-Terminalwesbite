@@ -23,32 +23,43 @@ interface SauceModalProps {
   allowNoSauce?: boolean;
   /** Zeigt den „Ohne Gemüse"-Schalter an. */
   allowNoVeg?: boolean;
+  /** Modifier-Modus für Soßen-Gerichte (C/B/S/E/M): keine Soßen-Liste, „Keine
+   *  Soße" als Toggle, Bestätigen immer möglich. Die Soße steckt schon im
+   *  Gericht; wählbar sind nur die Modifikatoren. */
+  modifiersOnly?: boolean;
   /** Auswählbare Soßen. Default: alle. Süße Gerichte schränken die Liste ein. */
   sauces?: BoxSauce[];
   onClose: () => void;
-  onConfirm: (sauce: BoxSauce | null, withoutVeg: boolean) => void;
+  onConfirm: (sauce: BoxSauce | null, withoutVeg: boolean, noSauce: boolean) => void;
 }
 
-export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNoVeg, optional, allowNoSauce, allowNoVeg, sauces = BOX_SAUCES, onClose, onConfirm }: SauceModalProps) {
+export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNoVeg, optional, allowNoSauce, allowNoVeg, modifiersOnly, sauces = BOX_SAUCES, onClose, onConfirm }: SauceModalProps) {
   const { tr } = useLang();
   const { isItemSoldOut } = useAvailability();
   const [selectedId, setSelectedId] = useState<string | null>(
     () => initialSauceId ?? ((optional || initialNoSauce) ? NONE : null),
   );
   const [withoutVeg, setWithoutVeg] = useState<boolean>(() => initialNoVeg ?? false);
+  const [noSauce, setNoSauce] = useState<boolean>(() => initialNoSauce ?? false);
 
   const handleConfirm = () => {
+    if (modifiersOnly) {
+      onConfirm(null, withoutVeg, noSauce);
+      return;
+    }
     if (selectedId === null) return;
     if (selectedId === NONE) {
-      onConfirm(null, withoutVeg);
+      onConfirm(null, withoutVeg, true);
       return;
     }
     const sauce = BOX_SAUCES.find((s) => s.id === selectedId);
-    if (sauce) onConfirm(sauce, withoutVeg);
+    if (sauce) onConfirm(sauce, withoutVeg, false);
   };
 
-  const showNoSauce = optional || allowNoSauce;
+  const showNoSauce = optional || allowNoSauce || modifiersOnly;
   const noSauceLabel = optional ? tr.extraSauceNone : NO_SAUCE_LABEL;
+  const noSauceActive = modifiersOnly ? noSauce : selectedId === NONE;
+  const canConfirm = modifiersOnly || selectedId !== null;
 
   return (
     <div
@@ -63,9 +74,9 @@ export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNo
         <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-border gap-3">
           <div className="min-w-0">
             <h2 className="font-serif text-[22px] font-semibold text-foreground leading-tight">
-              {optional ? tr.extraSauce : tr.sauceSelectTitle}
+              {modifiersOnly ? tr.dishOptionsTitle : optional ? tr.extraSauce : tr.sauceSelectTitle}
             </h2>
-            {!optional && (
+            {!optional && !modifiersOnly && (
               <p className="text-muted-foreground text-[13px] mt-1 leading-snug">
                 {tr.sauceSelectSubtitle}
               </p>
@@ -84,6 +95,7 @@ export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNo
         </div>
 
         <div className="px-6 pt-4 pb-6">
+          {!modifiersOnly && (
           <div className="space-y-2.5 mb-4">
             {sauces.map((sauce) => {
               const isSelected = selectedId === sauce.id;
@@ -119,21 +131,22 @@ export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNo
               );
             })}
           </div>
+          )}
 
           {(showNoSauce || allowNoVeg) && (
-            <div className="space-y-2.5 mb-5 pt-4 mt-1 border-t border-border">
+            <div className={`space-y-2.5 mb-5 ${modifiersOnly ? "" : "pt-4 mt-1 border-t border-border"}`}>
               {showNoSauce && (
                 <button
                   type="button"
                   data-testid="button-sauce-none"
-                  onClick={() => setSelectedId(NONE)}
+                  onClick={() => (modifiersOnly ? setNoSauce((v) => !v) : setSelectedId(NONE))}
                   className={`w-full min-h-14 rounded-xl border-2 border-dashed flex items-center gap-3 px-5 py-3 text-left transition-all duration-150 active:scale-[0.99] ${
-                    selectedId === NONE
+                    noSauceActive
                       ? "border-primary bg-primary/10"
                       : "border-muted-foreground/30 bg-muted/40 hover:border-muted-foreground/50 hover:bg-muted/60"
                   }`}
                 >
-                  <Ban size={20} className={`shrink-0 ${selectedId === NONE ? "text-primary" : "text-muted-foreground"}`} />
+                  <Ban size={20} className={`shrink-0 ${noSauceActive ? "text-primary" : "text-muted-foreground"}`} />
                   <span className="text-[15px] font-semibold text-foreground">{noSauceLabel}</span>
                 </button>
               )}
@@ -173,9 +186,9 @@ export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNo
             <button
               data-testid="button-sauce-confirm"
               onClick={handleConfirm}
-              disabled={selectedId === null}
+              disabled={!canConfirm}
               className={`flex-1 h-12 rounded-xl text-[15px] font-semibold transition-all duration-150 ${
-                selectedId !== null
+                canConfirm
                   ? "bg-primary text-primary-foreground shadow-md active:scale-[0.98]"
                   : "bg-muted text-muted-foreground cursor-not-allowed"
               }`}
