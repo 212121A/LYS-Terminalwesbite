@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
 import { menuData, DRINK_ITEM_IDS, DIRECT_ADD_ITEM_IDS, type MenuItem } from "@/data/menu";
-import { BOX_ITEM_IDS, BOX_SAUCES, BOX_VEG_ITEM_IDS, NO_SAUCE_LABEL, NO_VEG_LABEL, type BoxSauce } from "@/data/boxSauces";
+import { BOX_ITEM_IDS, BOX_SAUCES, BOX_VEG_ITEM_IDS, BOX_DOUBLE_MEAT_ITEM_IDS, NO_SAUCE_LABEL, NO_VEG_LABEL, DOUBLE_MEAT_LABEL, doubleMeatSurcharge, type BoxSauce } from "@/data/boxSauces";
 import { toppingsConfigFor, TOPPING_ITEM_IDS, selectedIdsFromLabel } from "@/data/toppings";
 import { useCart, type CartItemEditMeta } from "@/store/cart";
 import { MenuItemCard } from "@/components/MenuItemCard";
@@ -27,6 +27,7 @@ interface PendingSauce {
   initialSauceId?: BoxSauce["id"];
   initialNoSauce?: boolean;
   initialNoVeg?: boolean;
+  initialDoubleMeat?: boolean;
 }
 
 interface PendingExtraSauce {
@@ -91,6 +92,7 @@ function parseSauceSizeLabel(sizeLabel?: string) {
     sauce: BOX_SAUCES.find((s) => parts.includes(s.label)) ?? null,
     noSauce: parts.includes(NO_SAUCE_LABEL),
     withoutVeg: parts.includes(NO_VEG_LABEL),
+    doubleMeat: parts.includes(DOUBLE_MEAT_LABEL),
   };
 }
 
@@ -236,15 +238,19 @@ export function Terminal() {
     setEditingQty(1);
   };
 
-  const handleSauceConfirm = (sauce: BoxSauce | null, withoutVeg: boolean) => {
+  const handleSauceConfirm = (sauce: BoxSauce | null, withoutVeg: boolean, _noSauce: boolean, doubleMeat: boolean) => {
     if (!pendingSauce) return;
-    const parts = [sauce ? sauce.label : NO_SAUCE_LABEL, withoutVeg ? NO_VEG_LABEL : null]
-      .filter(Boolean) as string[];
+    const parts = [
+      sauce ? sauce.label : NO_SAUCE_LABEL,
+      doubleMeat ? DOUBLE_MEAT_LABEL : null,
+      withoutVeg ? NO_VEG_LABEL : null,
+    ].filter(Boolean) as string[];
     const sizeLabel = parts.join(" · ");
+    const price = pendingSauce.price + (doubleMeat ? doubleMeatSurcharge(pendingSauce.itemId) : 0);
     commitItem(
       pendingSauce.itemId,
       `${pendingSauce.name} · ${sizeLabel}`,
-      pendingSauce.price,
+      price,
       sizeLabel,
       { kind: "sauce", baseName: pendingSauce.name, basePrice: pendingSauce.price },
     );
@@ -323,6 +329,7 @@ export function Terminal() {
         initialSauceId: parsed.sauce?.id,
         initialNoSauce: parsed.noSauce,
         initialNoVeg: parsed.withoutVeg,
+        initialDoubleMeat: parsed.doubleMeat,
       });
     } else if (item.edit.kind === "options" && item.edit.profile) {
       const parts = (item.sizeLabel ?? "").split(" · ");
@@ -723,8 +730,11 @@ export function Terminal() {
           initialSauceId={pendingSauce.initialSauceId}
           initialNoSauce={pendingSauce.initialNoSauce}
           initialNoVeg={pendingSauce.initialNoVeg}
+          initialDoubleMeat={pendingSauce.initialDoubleMeat}
           allowNoSauce
           allowNoVeg={BOX_VEG_ITEM_IDS.has(pendingSauce.itemId)}
+          allowDoubleMeat={BOX_DOUBLE_MEAT_ITEM_IDS.has(pendingSauce.itemId)}
+          doubleMeatSurcharge={doubleMeatSurcharge(pendingSauce.itemId)}
           onClose={cancelPendingSauce}
           onConfirm={handleSauceConfirm}
         />

@@ -59,6 +59,14 @@ check("GN3.id", gn3.id, "GN3 Sojasoße");
 const kr1 = toKitchenLineItem(index, cart({ itemId: "KR1", sizeLabel: "Matcha Soße" }));
 check("KR1.name", kr1.name, "Kleine Reisbox - Gemüse · Matcha Soße");
 
+// 4b) „Doppelt Fleisch" (Hähnchen-Box) steckt deutsch im sizeLabel → erscheint
+//     komplett im Küchen-/Dashboard-Namen, inkl. weiterer Modifikatoren.
+const gn2 = toKitchenLineItem(index, cart({ itemId: "GN2", sizeLabel: "Sojasoße · Doppelt Fleisch", price: 8 }));
+check("GN2.name", gn2.name, "Große Nudelbox - Hähnchen · Sojasoße · Doppelt Fleisch");
+check("GN2.id", gn2.id, "GN2 Sojasoße · Doppelt Fleisch");
+const kn2 = toKitchenLineItem(index, cart({ itemId: "KN2", sizeLabel: "Erdnusssoße · Doppelt Fleisch · Ohne Gemüse", price: 5.5 }));
+check("KN2.name", kn2.name, "Kleine Nudelbox - Hähnchen · Erdnusssoße · Doppelt Fleisch · Ohne Gemüse");
+
 // 5) Getränk mit Optionen (deutsche Konstanten)
 const m01 = toKitchenLineItem(index, cart({ itemId: "01", sizeLabel: "Classic · Kuhmilch", price: 4.5 }));
 check("01.number", m01.number, "01");

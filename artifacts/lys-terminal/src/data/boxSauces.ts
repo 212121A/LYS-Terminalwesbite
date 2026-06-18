@@ -21,6 +21,27 @@ export const BOX_SAUCES: BoxSauce[] = [
  *  damit sie unverändert über das `sizeLabel` ans Küchen-Dashboard gehen. */
 export const NO_SAUCE_LABEL = "Keine Soße";
 export const NO_VEG_LABEL = "Ohne Gemüse";
+export const DOUBLE_MEAT_LABEL = "Doppelt Fleisch";
+
+/** Box-Codes mit „Doppelt Fleisch"-Option — nur Hähnchen & Paniertes Hähnchen.
+ *  Andere Boxen (Gemüse, Tofu, Fisch, Garnelen, Frühlingsrollen) bleiben außen vor. */
+export const BOX_DOUBLE_MEAT_ITEM_IDS: ReadonlySet<string> = (() => {
+  const ids = new Set<string>();
+  for (const box of boxMenuItems) {
+    if (box.dishType !== "haehnchenBox" && box.dishType !== "paniertesHaehnchenBox") continue;
+    if (box.carbs.nudel.klein) ids.add(box.carbs.nudel.klein);
+    ids.add(box.carbs.nudel.gross);
+    if (box.carbs.reis.klein) ids.add(box.carbs.reis.klein);
+    ids.add(box.carbs.reis.gross);
+  }
+  return ids;
+})();
+
+/** Aufpreis für „Doppelt Fleisch": kleine Box +1 €, große Box +2 €. Die Größe
+ *  steckt im Box-Code-Präfix (K… = Klein, G… = Groß). */
+export function doubleMeatSurcharge(itemId: string): number {
+  return itemId.startsWith("K") ? 1 : 2;
+}
 
 /** Box-Codes, deren Gericht entfernbares Gemüse enthält → „Ohne Gemüse" sinnvoll.
  *  Ausgenommen: reine Gemüse-Box und Frühlingsrollen-Box (dort unsinnig). */

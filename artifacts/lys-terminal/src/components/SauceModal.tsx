@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Check, Ban } from "lucide-react";
-import { BOX_SAUCES, NO_SAUCE_LABEL, NO_VEG_LABEL, type BoxSauce } from "@/data/boxSauces";
+import { BOX_SAUCES, NO_SAUCE_LABEL, NO_VEG_LABEL, DOUBLE_MEAT_LABEL, type BoxSauce } from "@/data/boxSauces";
 import { useLang } from "@/i18n/LanguageContext";
 import { useAvailability } from "@/availability/AvailabilityContext";
 import { sauceAvailabilityId } from "@/lib/availability";
@@ -16,6 +16,8 @@ interface SauceModalProps {
   initialNoSauce?: boolean;
   /** Edit-Restore: war „Ohne Gemüse" gewählt. */
   initialNoVeg?: boolean;
+  /** Edit-Restore: war „Doppelt Fleisch" gewählt. */
+  initialDoubleMeat?: boolean;
   /** Optionaler Modus für Nicht-Box-Speisen: zusätzliche „Ohne extra Soße"-Option,
    *  Bestätigen immer möglich (gibt dann null zurück). */
   optional?: boolean;
@@ -23,6 +25,10 @@ interface SauceModalProps {
   allowNoSauce?: boolean;
   /** Zeigt den „Ohne Gemüse"-Schalter an. */
   allowNoVeg?: boolean;
+  /** Zeigt den „Doppelt Fleisch"-Schalter an (nur Hähnchen-/Paniertes-Hähnchen-Box). */
+  allowDoubleMeat?: boolean;
+  /** Aufpreis für „Doppelt Fleisch" in Euro (kleine Box 1, große Box 2). */
+  doubleMeatSurcharge?: number;
   /** Modifier-Modus für Soßen-Gerichte (C/B/S/E/M): keine Soßen-Liste, „Keine
    *  Soße" als Toggle, Bestätigen immer möglich. Die Soße steckt schon im
    *  Gericht; wählbar sind nur die Modifikatoren. */
@@ -30,10 +36,10 @@ interface SauceModalProps {
   /** Auswählbare Soßen. Default: alle. Süße Gerichte schränken die Liste ein. */
   sauces?: BoxSauce[];
   onClose: () => void;
-  onConfirm: (sauce: BoxSauce | null, withoutVeg: boolean, noSauce: boolean) => void;
+  onConfirm: (sauce: BoxSauce | null, withoutVeg: boolean, noSauce: boolean, doubleMeat: boolean) => void;
 }
 
-export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNoVeg, optional, allowNoSauce, allowNoVeg, modifiersOnly, sauces = BOX_SAUCES, onClose, onConfirm }: SauceModalProps) {
+export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNoVeg, initialDoubleMeat, optional, allowNoSauce, allowNoVeg, allowDoubleMeat, doubleMeatSurcharge, modifiersOnly, sauces = BOX_SAUCES, onClose, onConfirm }: SauceModalProps) {
   const { tr } = useLang();
   const { isItemSoldOut } = useAvailability();
   const [selectedId, setSelectedId] = useState<string | null>(
@@ -41,20 +47,26 @@ export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNo
   );
   const [withoutVeg, setWithoutVeg] = useState<boolean>(() => initialNoVeg ?? false);
   const [noSauce, setNoSauce] = useState<boolean>(() => initialNoSauce ?? false);
+  const [doubleMeat, setDoubleMeat] = useState<boolean>(() => initialDoubleMeat ?? false);
 
   const handleConfirm = () => {
     if (modifiersOnly) {
-      onConfirm(null, withoutVeg, noSauce);
+      onConfirm(null, withoutVeg, noSauce, doubleMeat);
       return;
     }
     if (selectedId === null) return;
     if (selectedId === NONE) {
-      onConfirm(null, withoutVeg, true);
+      onConfirm(null, withoutVeg, true, doubleMeat);
       return;
     }
     const sauce = BOX_SAUCES.find((s) => s.id === selectedId);
-    if (sauce) onConfirm(sauce, withoutVeg, false);
+    if (sauce) onConfirm(sauce, withoutVeg, false, doubleMeat);
   };
+
+  const doubleMeatPrice =
+    doubleMeatSurcharge !== undefined
+      ? "+" + doubleMeatSurcharge.toFixed(2).replace(".", ",") + " €"
+      : null;
 
   const showNoSauce = optional || allowNoSauce || modifiersOnly;
   const noSauceLabel = optional ? tr.extraSauceNone : NO_SAUCE_LABEL;
@@ -133,8 +145,35 @@ export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNo
           </div>
           )}
 
-          {(showNoSauce || allowNoVeg) && (
+          {(showNoSauce || allowNoVeg || allowDoubleMeat) && (
             <div className={`space-y-2.5 mb-5 ${modifiersOnly ? "" : "pt-4 mt-1 border-t border-border"}`}>
+              {allowDoubleMeat && (
+                <button
+                  type="button"
+                  data-testid="button-double-meat"
+                  onClick={() => setDoubleMeat((v) => !v)}
+                  className={`w-full min-h-14 rounded-xl border-2 border-dashed flex items-center justify-between gap-3 px-5 py-3 text-left transition-all duration-150 active:scale-[0.99] ${
+                    doubleMeat
+                      ? "border-primary bg-primary/10"
+                      : "border-muted-foreground/30 bg-muted/40 hover:border-muted-foreground/50 hover:bg-muted/60"
+                  }`}
+                >
+                  <span className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-colors ${
+                        doubleMeat ? "border-primary bg-primary" : "border-muted-foreground/40"
+                      }`}
+                    >
+                      {doubleMeat && <Check size={14} strokeWidth={3} className="text-primary-foreground" />}
+                    </div>
+                    <span className="text-[15px] font-semibold text-foreground">{DOUBLE_MEAT_LABEL}</span>
+                  </span>
+                  {doubleMeatPrice && (
+                    <span className="text-[14px] text-muted-foreground tabular-nums shrink-0">{doubleMeatPrice}</span>
+                  )}
+                </button>
+              )}
+
               {showNoSauce && (
                 <button
                   type="button"
