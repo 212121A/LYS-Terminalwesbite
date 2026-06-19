@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
 import { menuData, DRINK_ITEM_IDS, DIRECT_ADD_ITEM_IDS, type MenuItem } from "@/data/menu";
-import { BOX_ITEM_IDS, BOX_SAUCES, BOX_VEG_ITEM_IDS, BOX_DOUBLE_MEAT_ITEM_IDS, NO_SAUCE_LABEL, NO_VEG_LABEL, DOUBLE_MEAT_LABEL, doubleMeatSurcharge, type BoxSauce } from "@/data/boxSauces";
+import { BOX_ITEM_IDS, BOX_SAUCES, BOX_VEG_ITEM_IDS, BOX_DOUBLE_OPTION, NO_SAUCE_LABEL, NO_VEG_LABEL, type BoxSauce } from "@/data/boxSauces";
 import { toppingsConfigFor, TOPPING_ITEM_IDS, selectedIdsFromLabel } from "@/data/toppings";
 import { useCart, type CartItemEditMeta } from "@/store/cart";
 import { MenuItemCard } from "@/components/MenuItemCard";
@@ -92,7 +92,7 @@ function parseSauceSizeLabel(sizeLabel?: string) {
     sauce: BOX_SAUCES.find((s) => parts.includes(s.label)) ?? null,
     noSauce: parts.includes(NO_SAUCE_LABEL),
     withoutVeg: parts.includes(NO_VEG_LABEL),
-    doubleMeat: parts.includes(DOUBLE_MEAT_LABEL),
+    doubleMeat: parts.some((p) => /^doppelt\b/i.test(p)),
   };
 }
 
@@ -240,13 +240,14 @@ export function Terminal() {
 
   const handleSauceConfirm = (sauce: BoxSauce | null, withoutVeg: boolean, _noSauce: boolean, doubleMeat: boolean) => {
     if (!pendingSauce) return;
+    const dbl = BOX_DOUBLE_OPTION.get(pendingSauce.itemId);
     const parts = [
       sauce ? sauce.label : NO_SAUCE_LABEL,
-      doubleMeat ? DOUBLE_MEAT_LABEL : null,
+      doubleMeat && dbl ? dbl.label : null,
       withoutVeg ? NO_VEG_LABEL : null,
     ].filter(Boolean) as string[];
     const sizeLabel = parts.join(" · ");
-    const price = pendingSauce.price + (doubleMeat ? doubleMeatSurcharge(pendingSauce.itemId) : 0);
+    const price = pendingSauce.price + (doubleMeat && dbl ? dbl.surcharge : 0);
     commitItem(
       pendingSauce.itemId,
       `${pendingSauce.name} · ${sizeLabel}`,
@@ -733,8 +734,9 @@ export function Terminal() {
           initialDoubleMeat={pendingSauce.initialDoubleMeat}
           allowNoSauce
           allowNoVeg={BOX_VEG_ITEM_IDS.has(pendingSauce.itemId)}
-          allowDoubleMeat={BOX_DOUBLE_MEAT_ITEM_IDS.has(pendingSauce.itemId)}
-          doubleMeatSurcharge={doubleMeatSurcharge(pendingSauce.itemId)}
+          allowDoubleMeat={BOX_DOUBLE_OPTION.has(pendingSauce.itemId)}
+          doubleMeatLabel={BOX_DOUBLE_OPTION.get(pendingSauce.itemId)?.label}
+          doubleMeatSurcharge={BOX_DOUBLE_OPTION.get(pendingSauce.itemId)?.surcharge}
           onClose={cancelPendingSauce}
           onConfirm={handleSauceConfirm}
         />

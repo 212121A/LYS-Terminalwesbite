@@ -66,6 +66,8 @@ check("GN2.name", gn2.name, "Große Nudelbox - Hähnchen · Sojasoße · Doppelt
 check("GN2.id", gn2.id, "GN2 Sojasoße · Doppelt Fleisch");
 const kn2 = toKitchenLineItem(index, cart({ itemId: "KN2", sizeLabel: "Erdnusssoße · Doppelt Fleisch · Ohne Gemüse", price: 5.5 }));
 check("KN2.name", kn2.name, "Kleine Nudelbox - Hähnchen · Erdnusssoße · Doppelt Fleisch · Ohne Gemüse");
+const gn4 = toKitchenLineItem(index, cart({ itemId: "GN4", sizeLabel: "Sojasoße · Doppelt Fisch", price: 9 }));
+check("GN4.name", gn4.name, "Große Nudelbox - Fisch (Pangasius Filet) · Sojasoße · Doppelt Fisch");
 
 // 5) Getränk mit Optionen (deutsche Konstanten)
 const m01 = toKitchenLineItem(index, cart({ itemId: "01", sizeLabel: "Classic · Kuhmilch", price: 4.5 }));

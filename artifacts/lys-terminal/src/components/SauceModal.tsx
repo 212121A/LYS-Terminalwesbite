@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Check, Ban } from "lucide-react";
-import { BOX_SAUCES, NO_SAUCE_LABEL, NO_VEG_LABEL, DOUBLE_MEAT_LABEL, type BoxSauce } from "@/data/boxSauces";
+import { BOX_SAUCES, NO_SAUCE_LABEL, NO_VEG_LABEL, type BoxSauce } from "@/data/boxSauces";
 import { useLang } from "@/i18n/LanguageContext";
 import { useAvailability } from "@/availability/AvailabilityContext";
 import { sauceAvailabilityId } from "@/lib/availability";
@@ -25,9 +25,11 @@ interface SauceModalProps {
   allowNoSauce?: boolean;
   /** Zeigt den „Ohne Gemüse"-Schalter an. */
   allowNoVeg?: boolean;
-  /** Zeigt den „Doppelt Fleisch"-Schalter an (nur Hähnchen-/Paniertes-Hähnchen-Box). */
+  /** Zeigt den „Doppelt"-Schalter an (Hähnchen-/Paniertes-Hähnchen-/Fisch-Box). */
   allowDoubleMeat?: boolean;
-  /** Aufpreis für „Doppelt Fleisch" in Euro (kleine Box 1, große Box 2). */
+  /** Label des „Doppelt"-Schalters („Doppelt Fleisch" bzw. „Doppelt Fisch"). */
+  doubleMeatLabel?: string;
+  /** Aufpreis für „Doppelt" in Euro (je nach Box/Größe 1, 2 oder 3). */
   doubleMeatSurcharge?: number;
   /** Modifier-Modus für Soßen-Gerichte (C/B/S/E/M): keine Soßen-Liste, „Keine
    *  Soße" als Toggle, Bestätigen immer möglich. Die Soße steckt schon im
@@ -39,7 +41,7 @@ interface SauceModalProps {
   onConfirm: (sauce: BoxSauce | null, withoutVeg: boolean, noSauce: boolean, doubleMeat: boolean) => void;
 }
 
-export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNoVeg, initialDoubleMeat, optional, allowNoSauce, allowNoVeg, allowDoubleMeat, doubleMeatSurcharge, modifiersOnly, sauces = BOX_SAUCES, onClose, onConfirm }: SauceModalProps) {
+export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNoVeg, initialDoubleMeat, optional, allowNoSauce, allowNoVeg, allowDoubleMeat, doubleMeatLabel, doubleMeatSurcharge, modifiersOnly, sauces = BOX_SAUCES, onClose, onConfirm }: SauceModalProps) {
   const { tr } = useLang();
   const { isItemSoldOut } = useAvailability();
   const [selectedId, setSelectedId] = useState<string | null>(
@@ -166,7 +168,7 @@ export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNo
                     >
                       {doubleMeat && <Check size={14} strokeWidth={3} className="text-primary-foreground" />}
                     </div>
-                    <span className="text-[15px] font-semibold text-foreground">{DOUBLE_MEAT_LABEL}</span>
+                    <span className="text-[15px] font-semibold text-foreground">{doubleMeatLabel}</span>
                   </span>
                   {doubleMeatPrice && (
                     <span className="text-[14px] text-muted-foreground tabular-nums shrink-0">{doubleMeatPrice}</span>
