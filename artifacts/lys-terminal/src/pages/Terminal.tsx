@@ -488,7 +488,7 @@ export function Terminal() {
 
   return (
     <div className="relative flex flex-col h-screen bg-background overflow-hidden animate-in fade-in duration-500">
-      <header className="lys-smoke-bg overflow-hidden relative z-10 flex items-center justify-between px-6 py-4 border-b border-border shrink-0 bg-background min-[1600px]:px-10 min-[1600px]:py-7">
+      <header className="overflow-hidden relative z-10 flex items-center justify-between gap-3 mx-3 mt-3 px-6 py-3 rounded-full border border-card-border bg-card shadow-sm shrink-0 min-[1600px]:mx-5 min-[1600px]:mt-5 min-[1600px]:px-10 min-[1600px]:py-5">
         <button
           type="button"
           aria-label="Personal: Verfügbarkeit bearbeiten"
@@ -514,7 +514,7 @@ export function Terminal() {
           <button
             data-testid="button-cancel-order"
             onClick={handleCancelOrder}
-            className="flex items-center gap-1.5 h-11 px-3 rounded-xl bg-card border border-card-border text-foreground text-[13px] font-medium active:scale-95 transition-transform min-[1600px]:h-16 min-[1600px]:px-5 min-[1600px]:text-[20px] min-[1600px]:rounded-2xl"
+            className="flex items-center gap-1.5 h-11 px-3 rounded-full bg-card border border-card-border text-foreground text-[13px] font-medium active:scale-95 transition-transform min-[1600px]:h-16 min-[1600px]:px-5 min-[1600px]:text-[20px] min-[1600px]:rounded-full"
           >
             <Home strokeWidth={1.9} className="w-4 h-4 min-[1600px]:w-7 min-[1600px]:h-7" />
             <span className="hidden sm:inline">{tr.cancelOrder}</span>
@@ -523,7 +523,7 @@ export function Terminal() {
           <button
             data-testid="button-allergens"
             onClick={() => setShowAllergens(true)}
-            className="flex items-center gap-1.5 h-11 px-3 rounded-xl bg-card border border-card-border text-foreground text-[13px] font-medium active:scale-95 transition-transform min-[1600px]:h-16 min-[1600px]:px-5 min-[1600px]:text-[20px] min-[1600px]:rounded-2xl"
+            className="flex items-center gap-1.5 h-11 px-3 rounded-full bg-card border border-card-border text-foreground text-[13px] font-medium active:scale-95 transition-transform min-[1600px]:h-16 min-[1600px]:px-5 min-[1600px]:text-[20px] min-[1600px]:rounded-full"
           >
             <Info strokeWidth={1.9} className="w-4 h-4 min-[1600px]:w-7 min-[1600px]:h-7" />
             <span className="hidden lg:inline">{tr.allergenInfo}</span>
@@ -536,13 +536,13 @@ export function Terminal() {
       <div className="relative z-10 flex flex-1 overflow-hidden">
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="relative z-10 border-b border-border bg-background shrink-0">
-            <div className="flex flex-wrap justify-center items-center gap-2 px-4 pt-3 pb-1 min-[1600px]:gap-4 min-[1600px]:pt-6 min-[1600px]:pb-2">
+            <div className="flex items-center gap-2 px-3 pt-3 pb-1 min-[1600px]:gap-4 min-[1600px]:px-5 min-[1600px]:pt-6 min-[1600px]:pb-2">
               {([["food", tr.menuFood], ["drinks", tr.menuDrinks]] as const).map(([v, label]) => (
                 <button
                   key={v}
                   data-testid={`button-view-${v}`}
                   onClick={() => handleView(v)}
-                  className={`px-6 py-2.5 rounded-full text-[15px] font-semibold transition-all duration-200 active:scale-95 min-[1600px]:px-14 min-[1600px]:py-4 min-[1600px]:text-[26px] ${
+                  className={`flex-1 px-6 py-2.5 rounded-full text-[15px] font-semibold transition-all duration-200 active:scale-95 min-[1600px]:px-14 min-[1600px]:py-4 min-[1600px]:text-[26px] ${
                     view === v
                       ? "bg-primary text-primary-foreground shadow-md"
                       : "bg-card border border-card-border text-foreground"
@@ -570,6 +570,9 @@ export function Terminal() {
               const categoryImages = (category.images ?? []).map(
                 (src) => `${assetBase}/${src.replace(/^\//, "")}`,
               );
+              const useTile =
+                view === "drinks" ||
+                ["bowls", "kem", "kids", "vorspeisen"].includes(category.id);
               return (
                 <div
                   key={category.id}
@@ -578,7 +581,7 @@ export function Terminal() {
                   className="mb-10 lys-cv-section"
                 >
                   <div className="flex items-center gap-3 mb-4 pt-2">
-                    <h2 className="font-serif text-[22px] font-semibold text-primary min-[1600px]:text-[112px]">
+                    <h2 className="lys-display text-[22px] font-semibold text-primary min-[1600px]:text-[112px]">
                       {getCategoryName(category.id)}
                     </h2>
                     <div className="flex-1 h-px bg-primary/20" />
@@ -606,7 +609,13 @@ export function Terminal() {
                           {tr.noodleBoxNote}
                         </div>
                       )}
-                      <div className="space-y-2 min-[1600px]:space-y-4 min-[1600px]:max-w-[48rem] min-[1600px]:mx-auto">
+                      <div
+                        className={
+                          useTile
+                            ? "grid grid-cols-2 gap-3 min-[1600px]:gap-5 min-[1600px]:max-w-[48rem] min-[1600px]:mx-auto"
+                            : "space-y-2 min-[1600px]:space-y-4 min-[1600px]:max-w-[48rem] min-[1600px]:mx-auto"
+                        }
+                      >
                         {category.boxItems
                           ? category.boxItems.map((box, i) => (
                               <BoxItemCard
@@ -624,6 +633,7 @@ export function Terminal() {
                                 onAdd={handleAdd}
                                 onRemove={removeItem}
                                 index={i}
+                                tile={useTile}
                               />
                             ))}
                       </div>
@@ -648,7 +658,7 @@ export function Terminal() {
           </button>
         )}
 
-        <div className="relative z-10 hidden md:flex w-80 min-[1600px]:w-[34rem] shrink-0 border-l border-border bg-background flex-col">
+        <div className="relative z-10 hidden md:flex w-80 min-[1600px]:w-[34rem] shrink-0 my-3 mr-3 min-[1600px]:my-5 min-[1600px]:mr-5 rounded-3xl border border-card-border bg-card shadow-[0_12px_40px_-10px_rgba(96,77,65,0.28)] overflow-hidden flex-col">
           <CartPanel
             items={items}
             total={total}

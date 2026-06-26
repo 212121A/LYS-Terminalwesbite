@@ -68,7 +68,7 @@ export function CartPanel({ items, total, onRemove, onAdd, onEdit, onRemoveLine,
           <button
             data-testid="button-clear-cart"
             onClick={onClear}
-            className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-lg hover:bg-destructive/10 active:scale-90"
+            className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-full hover:bg-destructive/10 active:scale-90"
           >
             <Trash2 size={16} />
           </button>
@@ -131,7 +131,7 @@ export function CartPanel({ items, total, onRemove, onAdd, onEdit, onRemoveLine,
                       <button
                         data-testid={`button-cart-edit-${item.id}`}
                         onClick={() => onEdit(item.id)}
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-[12px] min-[1600px]:text-[18px] font-medium text-primary/80 hover:bg-muted active:scale-95 transition-all"
+                        className="flex items-center gap-1 px-2 py-1 rounded-full text-[12px] min-[1600px]:text-[18px] font-medium text-primary/80 hover:bg-muted active:scale-95 transition-all"
                       >
                         <Pencil size={13} strokeWidth={2} />
                         {tr.editItem}
@@ -142,7 +142,7 @@ export function CartPanel({ items, total, onRemove, onAdd, onEdit, onRemoveLine,
                         data-testid={`button-cart-delete-${item.id}`}
                         onClick={() => onRemoveLine(item.id)}
                         aria-label="Löschen"
-                        className="flex items-center justify-center w-8 h-8 min-[1600px]:w-12 min-[1600px]:h-12 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:scale-95 transition-all"
+                        className="flex items-center justify-center w-8 h-8 min-[1600px]:w-12 min-[1600px]:h-12 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:scale-95 transition-all"
                       >
                         <Trash2 className="w-4 h-4 min-[1600px]:w-6 min-[1600px]:h-6" />
                       </button>
@@ -165,7 +165,7 @@ export function CartPanel({ items, total, onRemove, onAdd, onEdit, onRemoveLine,
               <button
                 data-testid="button-place-order"
                 onClick={onCheckout}
-                className="w-full h-14 min-[1600px]:h-20 rounded-xl bg-primary text-primary-foreground text-[16px] min-[1600px]:text-[26px] font-semibold active:scale-[0.98] transition-all duration-150 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                className="w-full h-14 min-[1600px]:h-20 rounded-full bg-primary text-primary-foreground text-[16px] min-[1600px]:text-[26px] font-semibold active:scale-[0.98] transition-all duration-150 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
               >
                 {tr.placeOrder}
               </button>

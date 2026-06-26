@@ -68,7 +68,7 @@ function BoxItemCardBase({ item, onAdd, index = 0 }: BoxItemCardProps) {
   return (
     <div
       style={{ animationDelay: `${cardDelay}ms` }}
-      className="bg-card border border-card-border rounded-xl p-4 min-[1600px]:p-8 flex items-start justify-between gap-4 min-[1600px]:gap-8 shadow-[0_6px_20px_rgba(96,77,65,0.18)] hover:shadow-[0_10px_28px_rgba(96,77,65,0.26)] transition-shadow duration-200 animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
+      className="bg-card border border-card-border rounded-xl p-4 min-[1600px]:p-8 flex items-start justify-between gap-4 min-[1600px]:gap-8 lys-card animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
       data-testid={`card-box-${item.id}`}
     >
       <div className="flex-1 min-w-0">

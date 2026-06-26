@@ -12,21 +12,48 @@ import { dishAvailabilityId } from "@/lib/availability";
 
 type Carb = "nudel" | "reis";
 
+/** Transparentes Produkt-/Frucht-Bild je Getränk-Item (Dateien in public/fruits). */
+const FRUIT_IMAGE: Record<string, string> = {
+  "02": "erdbeere", "03": "mango", "04": "himbeere", "05": "blaubeere", "06": "ananas", "07": "vanille", "08": "kokos",
+  "09": "kaffee",
+  "15": "passionsfrucht", "16": "lychee", "17": "pfirsich", "18": "zitrone",
+  "19": "zitrone", "20": "pfirsich", "21": "lychee", "22": "ananas",
+};
+
+/** Items, die mehrere Früchte zeigen (Name nennt mehrere Früchte). */
+const FRUIT_MULTI: Record<string, string[]> = {
+  "10": ["kaffee", "eis"],
+  "11": ["kaffee", "eis"],
+  "12": ["kaffee", "eis"],
+  "13": ["kaffee", "kokos"],
+  "14": ["kaffee", "kokos"],
+  "16": ["lychee", "zitrone", "orange"],
+  "17": ["pfirsich", "orange"],
+  "23": ["banane", "erdbeere", "mango", "ananas", "himbeere", "blaubeere"],
+};
+
 interface MenuItemCardProps {
   item: MenuItem;
   quantityInCart: (cartId: string) => number;
   onAdd: (itemId: string, name: string, price: number, sizeLabel?: string) => void;
   onRemove: (cartId: string) => void;
   index?: number;
+  /** Quadratische Kachel-Variante (Getränke-Ansicht, große Frucht). */
+  tile?: boolean;
 }
 
-function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: MenuItemCardProps) {
+function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0, tile = false }: MenuItemCardProps) {
   const { tr } = useLang();
   const { isItemSoldOut } = useAvailability();
   const soldOut = isItemSoldOut(dishAvailabilityId(item));
   const [carb, setCarb] = useState<Carb>("nudel");
   const [flashKey, setFlashKey] = useState<string | null>(null);
   const cardDelay = Math.min(index, 10) * 40;
+  const ASSET = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const fruitFile = FRUIT_IMAGE[item.id];
+  const fruitSrc = fruitFile ? `${ASSET}/fruits/${fruitFile}.png` : null;
+  const mediaFiles = FRUIT_MULTI[item.id] ?? (fruitFile ? [fruitFile] : []);
+  const mediaSrcs = mediaFiles.map((f) => `${ASSET}/fruits/${f}.png`);
 
   const flash = (key: string) => {
     setFlashKey(key);
@@ -70,7 +97,7 @@ function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: 
     return (
       <div
         style={{ animationDelay: `${cardDelay}ms` }}
-        className="bg-card border border-card-border rounded-xl p-4 min-[1600px]:p-8 shadow-[0_6px_20px_rgba(96,77,65,0.18)] hover:shadow-[0_10px_28px_rgba(96,77,65,0.26)] transition-shadow duration-200 animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
+        className="bg-card border border-card-border rounded-xl p-4 min-[1600px]:p-8 lys-card animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
         data-testid={`card-menuitem-${item.id}`}
       >
         <div className="mb-3">
@@ -81,8 +108,20 @@ function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: 
             {item.spicy && <Flame size={14} className="text-orange-500" />}
             <AllergenInfo dishName={displayName} allergens={allergenList} additives={additiveList} testId={`button-allergen-${item.id}`} />
           </div>
+          <div className="flex items-center gap-2 min-[1600px]:gap-4">
           <h3 className="font-medium text-foreground text-[15px] min-[1600px]:text-[32px] leading-snug">{displayName}</h3>
-          {item.description && (
+          {fruitSrc && (
+            <img
+              src={fruitSrc}
+              alt=""
+              aria-hidden
+              loading="lazy"
+              decoding="async"
+              className="w-9 h-9 min-[1600px]:w-20 min-[1600px]:h-20 object-contain shrink-0 drop-shadow-sm"
+            />
+          )}
+        </div>
+          {item.description && !item.optionProfile && (
             <p className="text-muted-foreground text-[13px] min-[1600px]:text-[22px] mt-1 leading-relaxed">{item.description}</p>
           )}
         </div>
@@ -162,10 +201,139 @@ function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: 
     if (!needsModal) flash(cartId);
   };
 
+  const addButton = (extra = "") =>
+    qty === 0 ? (
+      <button
+        data-testid={`button-add-${item.id}`}
+        onClick={handleAddFlash}
+        className={`w-11 h-11 min-[1600px]:w-20 min-[1600px]:h-20 rounded-full flex items-center justify-center active:scale-90 transition-all duration-150 shadow-sm shrink-0 ${extra} ${flashKey === cartId ? "bg-emerald-600 text-white" : "bg-primary text-primary-foreground"}`}
+      >
+        {flashKey === cartId ? <Check size={20} strokeWidth={3} className="lys-pop min-[1600px]:w-10 min-[1600px]:h-10" /> : <Plus size={20} strokeWidth={2.5} className="min-[1600px]:w-10 min-[1600px]:h-10" />}
+      </button>
+    ) : (
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          data-testid={`button-remove-${item.id}`}
+          onClick={() => onRemove(cartId)}
+          className="w-11 h-11 min-[1600px]:w-20 min-[1600px]:h-20 rounded-full bg-secondary border border-card-border text-foreground flex items-center justify-center active:scale-95 transition-transform duration-100"
+        >
+          <Minus size={18} strokeWidth={2.5} className="min-[1600px]:w-9 min-[1600px]:h-9" />
+        </button>
+        <span data-testid={`text-qty-${item.id}`} className="text-[16px] min-[1600px]:text-[28px] font-semibold text-foreground w-6 min-[1600px]:w-12 text-center tabular-nums">{qty}</span>
+        <button
+          data-testid={`button-add-more-${item.id}`}
+          onClick={handleAddFlash}
+          className={`w-11 h-11 min-[1600px]:w-20 min-[1600px]:h-20 rounded-full flex items-center justify-center active:scale-90 transition-all duration-150 shadow-sm ${flashKey === cartId ? "bg-emerald-600 text-white" : "bg-primary text-primary-foreground"}`}
+        >
+          {flashKey === cartId ? <Check size={20} strokeWidth={3} className="lys-pop min-[1600px]:w-10 min-[1600px]:h-10" /> : <Plus size={20} strokeWidth={2.5} className="min-[1600px]:w-10 min-[1600px]:h-10" />}
+        </button>
+      </div>
+    );
+
+  if (tile) {
+    const hasMedia = mediaSrcs.length > 0;
+    const single = mediaSrcs.length === 1;
+    const carbToggle = item.requiresCarbChoice ? (
+      <div
+        role="radiogroup"
+        aria-label={tr.carbNudel + " / " + tr.carbReis}
+        className="inline-flex items-center self-start rounded-full bg-muted/70 p-1 min-[1600px]:p-1.5 border border-card-border"
+      >
+        {(["nudel", "reis"] as Carb[]).map((option) => {
+          const selected = option === carb;
+          const label = option === "nudel" ? tr.carbNudel : tr.carbReis;
+          return (
+            <button
+              key={option}
+              role="radio"
+              aria-checked={selected}
+              data-testid={`button-carb-${item.id}-${option}`}
+              onClick={() => setCarb(option)}
+              className={`px-3.5 py-1 min-[1600px]:px-6 min-[1600px]:py-2 rounded-full text-[12px] min-[1600px]:text-[20px] font-medium transition-all duration-150 ${
+                selected ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground/70"
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    ) : null;
+
+    return (
+      <div
+        style={{ animationDelay: `${cardDelay}ms` }}
+        className="bg-card border border-card-border rounded-3xl p-4 min-[1600px]:p-7 aspect-square flex flex-col lys-card animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
+        data-testid={`card-menuitem-${item.id}`}
+      >
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[11px] min-[1600px]:text-[18px] font-medium text-foreground/60 border border-foreground/20 bg-foreground/5 px-1.5 py-0.5 min-[1600px]:px-3 min-[1600px]:py-1 rounded font-mono">
+            {item.number}
+          </span>
+          {item.spicy && <Flame size={14} className="text-orange-500" />}
+          <AllergenInfo dishName={displayName} allergens={allergenList} additives={additiveList} testId={`button-allergen-${item.id}`} />
+        </div>
+
+        {hasMedia ? (
+          <>
+            <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center py-2">
+              {single ? (
+                <img
+                  src={mediaSrcs[0]}
+                  alt=""
+                  aria-hidden
+                  loading="lazy"
+                  decoding="async"
+                  className="max-h-full max-w-[78%] object-contain drop-shadow-md"
+                />
+              ) : (
+                <div className="flex flex-wrap items-center justify-center content-center gap-1.5 min-[1600px]:gap-3 max-h-full w-full">
+                  {mediaSrcs.map((src, i) => (
+                    <img
+                      key={i}
+                      src={src}
+                      alt=""
+                      aria-hidden
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                      className={`object-contain drop-shadow-sm ${
+                        mediaSrcs.length <= 2 ? "w-[42%]" : mediaSrcs.length === 3 ? "w-[30%] max-h-[82%]" : "w-[29%] max-h-[46%]"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            <h3 className="font-medium text-foreground text-[14px] min-[1600px]:text-[24px] leading-snug">{displayName}</h3>
+            <div className="mt-1.5 flex items-center justify-between gap-2">
+              <span className="text-[16px] min-[1600px]:text-[28px] font-semibold text-foreground tabular-nums">
+                <Price value={item.price} />
+              </span>
+              {addButton()}
+            </div>
+          </>
+        ) : (
+          <>
+            <h3 className="mt-2.5 min-[1600px]:mt-4 font-medium text-foreground text-[16px] min-[1600px]:text-[30px] leading-snug">{displayName}</h3>
+            <div className="flex-1" />
+            {carbToggle}
+            <div className="mt-3 min-[1600px]:mt-5 flex items-center justify-between gap-2">
+              <span className="text-[16px] min-[1600px]:text-[28px] font-semibold text-foreground tabular-nums">
+                <Price value={item.price} />
+              </span>
+              {addButton()}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       style={{ animationDelay: `${cardDelay}ms` }}
-      className="bg-card border border-card-border rounded-xl p-4 min-[1600px]:p-8 flex items-center justify-between gap-4 min-[1600px]:gap-8 shadow-[0_6px_20px_rgba(96,77,65,0.18)] hover:shadow-[0_10px_28px_rgba(96,77,65,0.26)] transition-shadow duration-200 animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
+      className="bg-card border border-card-border rounded-xl p-4 min-[1600px]:p-8 flex items-center justify-between gap-4 min-[1600px]:gap-8 lys-card animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
       data-testid={`card-menuitem-${item.id}`}
     >
       <div className="flex-1 min-w-0">
@@ -176,8 +344,20 @@ function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0 }: 
           {item.spicy && <Flame size={14} className="text-orange-500" />}
           <AllergenInfo dishName={displayName} allergens={allergenList} additives={additiveList} testId={`button-allergen-${item.id}`} />
         </div>
-        <h3 className="font-medium text-foreground text-[15px] min-[1600px]:text-[32px] leading-snug">{displayName}</h3>
-        {item.description && (
+        <div className="flex items-center gap-2 min-[1600px]:gap-4">
+          <h3 className="font-medium text-foreground text-[15px] min-[1600px]:text-[32px] leading-snug">{displayName}</h3>
+          {fruitSrc && (
+            <img
+              src={fruitSrc}
+              alt=""
+              aria-hidden
+              loading="lazy"
+              decoding="async"
+              className="w-9 h-9 min-[1600px]:w-20 min-[1600px]:h-20 object-contain shrink-0 drop-shadow-sm"
+            />
+          )}
+        </div>
+        {item.description && !item.optionProfile && (
           <p className="text-muted-foreground text-[13px] min-[1600px]:text-[22px] mt-0.5 leading-relaxed">{item.description}</p>
         )}
         {item.requiresCarbChoice && (

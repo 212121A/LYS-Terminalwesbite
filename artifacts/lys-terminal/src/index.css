@@ -76,18 +76,18 @@
   --elevate-2: rgba(96, 77, 65, 0.09);
 
   --background: 38 20% 80%;
-  --foreground: 28 9% 44%;
+  --foreground: 24 9% 14%;
 
   --border: 32 14% 80%;
   --input: 32 14% 80%;
   --ring: 27 32% 50%;
 
   --card: 42 37% 88%;
-  --card-foreground: 22 18% 28%;
+  --card-foreground: 24 9% 13%;
   --card-border: 32 18% 72%;
 
   --popover: 36 32% 94%;
-  --popover-foreground: 22 18% 28%;
+  --popover-foreground: 24 9% 13%;
   --popover-border: 33 16% 84%;
 
   --primary: 27 34% 37%;
@@ -97,16 +97,16 @@
   --secondary-foreground: 28 9% 42%;
 
   --muted: 34 20% 88%;
-  --muted-foreground: 28 9% 44%;
+  --muted-foreground: 24 9% 14%;
 
   --accent: 34 22% 86%;
-  --accent-foreground: 22 18% 28%;
+  --accent-foreground: 24 9% 13%;
 
   --destructive: 0 65% 52%;
   --destructive-foreground: 0 0% 100%;
 
   --sidebar: 34 22% 86%;
-  --sidebar-foreground: 22 18% 28%;
+  --sidebar-foreground: 24 9% 13%;
   --sidebar-border: 32 14% 78%;
   --sidebar-primary: 27 34% 37%;
   --sidebar-primary-foreground: 40 35% 97%;
@@ -125,14 +125,17 @@
   --app-font-mono: Menlo, monospace;
   --radius: .75rem;
 
-  --shadow-2xs: 0px 1px 3px 0px rgba(96, 77, 65, 0.06);
-  --shadow-xs: 0px 1px 3px 0px rgba(96, 77, 65, 0.08);
-  --shadow-sm: 0px 2px 4px 0px rgba(96, 77, 65, 0.08), 0px 1px 2px -1px rgba(96, 77, 65, 0.04);
-  --shadow: 0px 2px 8px 0px rgba(96, 77, 65, 0.1), 0px 1px 2px -1px rgba(96, 77, 65, 0.05);
-  --shadow-md: 0px 4px 12px 0px rgba(96, 77, 65, 0.12), 0px 2px 4px -1px rgba(96, 77, 65, 0.06);
-  --shadow-lg: 0px 8px 24px 0px rgba(96, 77, 65, 0.14), 0px 4px 6px -1px rgba(96, 77, 65, 0.06);
-  --shadow-xl: 0px 16px 40px 0px rgba(96, 77, 65, 0.16), 0px 8px 10px -1px rgba(96, 77, 65, 0.06);
-  --shadow-2xl: 0px 24px 64px 0px rgba(96, 77, 65, 0.18);
+  /* Materiality: weiche, mehrschichtig getönte Schatten (warm-braun statt
+   *  Schwarz). Bewusst luftig/niedrigopak — schwere Schatten lassen ein
+   *  helles Premium-Design "billig" wirken. */
+  --shadow-2xs: 0px 1px 2px 0px rgba(96, 77, 65, 0.04);
+  --shadow-xs: 0px 1px 2px 0px rgba(96, 77, 65, 0.05);
+  --shadow-sm: 0px 1px 2px 0px rgba(96, 77, 65, 0.05), 0px 2px 6px -2px rgba(96, 77, 65, 0.06);
+  --shadow: 0px 2px 4px -1px rgba(96, 77, 65, 0.05), 0px 6px 16px -4px rgba(96, 77, 65, 0.07);
+  --shadow-md: 0px 3px 6px -2px rgba(96, 77, 65, 0.06), 0px 10px 24px -6px rgba(96, 77, 65, 0.09);
+  --shadow-lg: 0px 4px 8px -3px rgba(96, 77, 65, 0.06), 0px 16px 36px -10px rgba(96, 77, 65, 0.11);
+  --shadow-xl: 0px 6px 12px -4px rgba(96, 77, 65, 0.07), 0px 28px 56px -14px rgba(96, 77, 65, 0.14);
+  --shadow-2xl: 0px 36px 72px -18px rgba(96, 77, 65, 0.18);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
@@ -230,6 +233,24 @@
 
   .font-serif {
     font-family: 'Cormorant Garamond', serif;
+  }
+
+  /* Display-Politur für Serif-Headlines: engeres Tracking + kontrolliertes
+   *  Leading. Cormorant läuft sonst zu locker für große Kiosk-Headlines. */
+  .lys-display {
+    font-family: 'Cormorant Garamond', serif;
+    letter-spacing: -0.015em;
+    line-height: 1.05;
+  }
+
+  /* Einheitliche Card-Materiality: dezent getönter Schatten, der bei Hover
+   *  weich aufsteigt. Ersetzt verstreute, zu schwere Inline-Schatten. */
+  .lys-card {
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 200ms ease, transform 200ms ease;
+  }
+  .lys-card:hover {
+    box-shadow: var(--shadow-lg);
   }
 
   .scrollbar-hide {
