@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { Check, AlertCircle } from "lucide-react";
+import { Check, CreditCard } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useLang } from "@/i18n/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
@@ -43,7 +43,7 @@ export function OrderSuccess() {
   const [, setLocation] = useLocation();
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
 
-  /** Kiosk-Reset: nach 20 s automatisch zurück zur Startseite für den nächsten Gast. */
+  /** Kiosk-Reset: nach 40 s automatisch zurück zur Startseite für den nächsten Gast. */
   useEffect(() => {
     const timer = window.setTimeout(() => setLocation("/"), 40_000);
     return () => window.clearTimeout(timer);
@@ -92,6 +92,8 @@ export function OrderSuccess() {
     };
   }, [sessionId, orderNoFromQuery]);
 
+  const hasNumber = orderNo !== "…" && orderNo !== "—" && orderNo.trim() !== "";
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="flex items-center justify-end px-4 py-3 shrink-0">
@@ -100,42 +102,57 @@ export function OrderSuccess() {
 
       <main className="flex-1 flex items-center justify-center p-6 pb-16">
         <div
-          className="w-full max-w-2xl min-[1600px]:max-w-5xl rounded-2xl bg-card text-card-foreground shadow-lg border border-card-border px-8 py-10 min-[1600px]:px-16 min-[1600px]:py-16 text-center"
+          className="w-full max-w-md min-[1600px]:max-w-3xl rounded-3xl bg-card text-card-foreground shadow-lg border border-card-border px-7 py-9 min-[1600px]:px-16 min-[1600px]:py-16 text-center"
           data-testid="order-success-card"
         >
-          <div className="flex justify-center mb-6">
-            <div className="relative">
-              <div className="w-20 h-20 rounded-full bg-emerald-500/15 flex items-center justify-center">
-                <div className="w-14 h-14 rounded-full bg-[#28C76F] flex items-center justify-center shadow-md">
-                  <Check className="w-8 h-8 text-white stroke-[2.5]" aria-hidden />
-                </div>
+          {/* Erfolg */}
+          <div className="flex justify-center mb-5 min-[1600px]:mb-8">
+            <div className="w-[72px] h-[72px] min-[1600px]:w-32 min-[1600px]:h-32 rounded-full bg-emerald-500/15 flex items-center justify-center">
+              <div className="w-14 h-14 min-[1600px]:w-24 min-[1600px]:h-24 rounded-full bg-[#28C76F] flex items-center justify-center shadow-md">
+                <Check className="w-8 h-8 min-[1600px]:w-14 min-[1600px]:h-14 text-white stroke-[2.5]" aria-hidden />
               </div>
             </div>
           </div>
 
-          <h1 className="font-serif text-[26px] sm:text-[30px] min-[1600px]:text-[52px] font-semibold text-primary leading-tight mb-3">
+          <h1 className="font-serif text-[26px] sm:text-[30px] min-[1600px]:text-[52px] font-semibold text-primary leading-tight mb-2 min-[1600px]:mb-4">
             {tr.orderSuccessTitle}
           </h1>
-          <p className="text-[14px] sm:text-[15px] min-[1600px]:text-[26px] text-muted-foreground leading-relaxed mb-8 max-w-sm min-[1600px]:max-w-2xl mx-auto">
+          <p className="text-[14px] sm:text-[15px] min-[1600px]:text-[26px] text-muted-foreground leading-relaxed mb-7 min-[1600px]:mb-12 max-w-sm min-[1600px]:max-w-2xl mx-auto">
             {tr.orderSuccessSubtitle}
           </p>
 
-          <div className="rounded-2xl bg-secondary/80 border border-border px-5 py-8 min-[1600px]:py-14">
-            <p className="text-[13px] sm:text-[15px] min-[1600px]:text-[28px] font-medium text-muted-foreground mb-2">{tr.orderSuccessNumberLabel}</p>
+          {/* Bestellnummer — der Hero, klar lesbar (Sans, Tabularziffern) */}
+          <div className="rounded-2xl min-[1600px]:rounded-3xl bg-secondary/80 border border-border px-5 py-7 min-[1600px]:py-12">
+            <p className="text-[13px] sm:text-[15px] min-[1600px]:text-[28px] font-medium text-muted-foreground">
+              {tr.orderSuccessNumberLabel}
+            </p>
             <p
-              className="font-serif font-bold text-primary tabular-nums leading-none tracking-tight text-[110px] sm:text-[150px] min-[1600px]:text-[320px]"
+              className="font-sans font-bold text-primary tabular-nums leading-none tracking-tight text-[100px] sm:text-[140px] min-[1600px]:text-[280px] mt-1"
               data-testid="order-success-number"
             >
               {orderNo}
             </p>
-            {orderNo !== "…" && orderNo !== "—" && orderNo.trim() !== "" && (
-              <p className="mt-5 min-[1600px]:mt-10 inline-flex items-center gap-2 min-[1600px]:gap-3 rounded-full bg-destructive/10 border border-destructive/25 text-destructive font-semibold px-4 py-2 min-[1600px]:px-8 min-[1600px]:py-4 text-[15px] sm:text-[18px] min-[1600px]:text-[30px]">
-                <AlertCircle className="w-4 h-4 min-[1600px]:w-8 min-[1600px]:h-8 shrink-0" />
-                {tr.orderSuccessRememberHint.replace("{nr}", orderNo)}
-              </p>
-            )}
+          </div>
 
-            {orderNo !== "…" && orderNo !== "—" && orderNo.trim() !== "" && (
+          {hasNumber && (
+            <>
+              {/* So geht's weiter — zwei klare Schritte */}
+              <div className="mt-6 min-[1600px]:mt-10 flex flex-col gap-3 min-[1600px]:gap-5 text-left">
+                <div className="flex items-center gap-3.5 min-[1600px]:gap-6 rounded-2xl bg-secondary/60 border border-border px-4 py-3.5 min-[1600px]:px-8 min-[1600px]:py-7">
+                  <span className="w-8 h-8 min-[1600px]:w-14 min-[1600px]:h-14 shrink-0 rounded-full bg-primary text-primary-foreground grid place-items-center font-semibold text-[15px] min-[1600px]:text-[26px] tabular-nums">1</span>
+                  <span className="text-[15px] sm:text-[16px] min-[1600px]:text-[28px] font-medium text-foreground leading-snug">
+                    {tr.orderSuccessStepShow}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3.5 min-[1600px]:gap-6 rounded-2xl bg-primary/10 border border-primary/30 px-4 py-3.5 min-[1600px]:px-8 min-[1600px]:py-7">
+                  <span className="w-8 h-8 min-[1600px]:w-14 min-[1600px]:h-14 shrink-0 rounded-full bg-primary text-primary-foreground grid place-items-center font-semibold text-[15px] min-[1600px]:text-[26px] tabular-nums">2</span>
+                  <span className="text-[15px] sm:text-[16px] min-[1600px]:text-[28px] font-semibold text-foreground leading-snug">
+                    {tr.orderSuccessStepPay}
+                  </span>
+                </div>
+              </div>
+
+              {/* QR-Komfort: Nummer aufs Handy */}
               <div className="mt-6 min-[1600px]:mt-12 flex flex-col items-center gap-3 min-[1600px]:gap-5">
                 <div className="rounded-2xl bg-white p-3 min-[1600px]:p-6 shadow-sm border border-border">
                   <QRCodeSVG
@@ -144,15 +161,23 @@ export function OrderSuccess() {
                     bgColor="#ffffff"
                     fgColor="#4A443F"
                     size={360}
-                    className="w-[180px] h-[180px] min-[1600px]:w-[360px] min-[1600px]:h-[360px]"
+                    className="w-[160px] h-[160px] min-[1600px]:w-[360px] min-[1600px]:h-[360px]"
                   />
                 </div>
                 <p className="text-[13px] sm:text-[15px] min-[1600px]:text-[24px] text-muted-foreground max-w-xs min-[1600px]:max-w-2xl leading-relaxed">
                   {tr.orderSuccessScanHint}
                 </p>
               </div>
-            )}
-          </div>
+
+              {/* Ausblick: Kartenzahlung am Terminal */}
+              <div className="mt-7 min-[1600px]:mt-12 flex items-center justify-center gap-2 min-[1600px]:gap-3 text-muted-foreground/80">
+                <CreditCard className="w-4 h-4 min-[1600px]:w-7 min-[1600px]:h-7 shrink-0" aria-hidden />
+                <span className="text-[12.5px] sm:text-[13px] min-[1600px]:text-[22px] leading-snug">
+                  {tr.orderSuccessCardSoon}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </main>
     </div>

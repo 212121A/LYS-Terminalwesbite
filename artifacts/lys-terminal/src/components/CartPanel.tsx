@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ShoppingCart, Trash2, Plus, Minus, Pencil } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, Pencil, ArrowRight } from "lucide-react";
 import { CartItem } from "@/store/cart";
 import { useLang } from "@/i18n/LanguageContext";
 import { Price } from "@/components/Price";
@@ -165,9 +165,10 @@ export function CartPanel({ items, total, onRemove, onAdd, onEdit, onRemoveLine,
               <button
                 data-testid="button-place-order"
                 onClick={onCheckout}
-                className="w-full h-14 min-[1600px]:h-20 rounded-full bg-primary text-primary-foreground text-[16px] min-[1600px]:text-[26px] font-semibold active:scale-[0.98] transition-all duration-150 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                className="w-full h-14 min-[1600px]:h-20 rounded-full bg-emerald-600 text-white text-[16px] min-[1600px]:text-[26px] font-semibold active:scale-[0.98] transition-all duration-150 shadow-[0_8px_22px_-6px_rgba(5,150,105,0.55)] hover:bg-emerald-700 flex items-center justify-center gap-2.5"
               >
                 {tr.placeOrder}
+                <ArrowRight strokeWidth={2.4} className="w-5 h-5 min-[1600px]:w-8 min-[1600px]:h-8" />
               </button>
             </div>
           </div>

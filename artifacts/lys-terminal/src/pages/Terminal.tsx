@@ -17,8 +17,7 @@ import { AllergenLegendModal } from "@/components/AllergenLegendModal";
 import { DiscountBadge } from "@/components/DiscountBadge";
 import { StaffEditOverlay } from "@/components/StaffEditOverlay";
 import { useLang } from "@/i18n/LanguageContext";
-import { discountedPrice, formatPrice } from "@/lib/discount";
-import { ShoppingCart, Home, Info } from "lucide-react";
+import { Home, Info } from "lucide-react";
 
 interface PendingSauce {
   itemId: string;
@@ -104,7 +103,6 @@ export function Terminal() {
   const [activeCategory, setActiveCategory] = useState(FOOD_CATEGORIES[0]?.id ?? menuData[0].id);
   const visibleCategories = view === "drinks" ? DRINK_CATEGORIES : FOOD_CATEGORIES;
   const [showPayment, setShowPayment] = useState(false);
-  const [showCartMobile, setShowCartMobile] = useState(false);
   const [pendingSauce, setPendingSauce] = useState<PendingSauce | null>(null);
   const [pendingExtraSauce, setPendingExtraSauce] = useState<PendingExtraSauce | null>(null);
   const [pendingSauceDish, setPendingSauceDish] = useState<PendingSauceDish | null>(null);
@@ -507,14 +505,14 @@ export function Terminal() {
         </button>
 
         <div className="hidden md:block">
-          <h1 className="font-serif text-[22px] font-medium text-primary tracking-wide min-[1600px]:text-[36px]">{tr.order}</h1>
+          <h1 className="font-serif text-[40px] font-medium text-primary tracking-wide min-[1600px]:text-[60px]">{tr.order}</h1>
         </div>
 
         <div className="flex items-center gap-2 min-[1600px]:gap-4">
           <button
             data-testid="button-cancel-order"
             onClick={handleCancelOrder}
-            className="flex items-center gap-1.5 h-11 px-3 rounded-full bg-card border border-card-border text-foreground text-[13px] font-medium active:scale-95 transition-transform min-[1600px]:h-16 min-[1600px]:px-5 min-[1600px]:text-[20px] min-[1600px]:rounded-full"
+            className="flex items-center gap-1.5 h-11 px-3 rounded-full bg-destructive/10 border border-destructive/25 text-destructive text-[13px] font-medium hover:bg-destructive/15 active:scale-95 transition-all min-[1600px]:h-16 min-[1600px]:px-5 min-[1600px]:text-[20px] min-[1600px]:rounded-full"
           >
             <Home strokeWidth={1.9} className="w-4 h-4 min-[1600px]:w-7 min-[1600px]:h-7" />
             <span className="hidden sm:inline">{tr.cancelOrder}</span>
@@ -542,7 +540,7 @@ export function Terminal() {
                   key={v}
                   data-testid={`button-view-${v}`}
                   onClick={() => handleView(v)}
-                  className={`flex-1 px-6 py-2.5 rounded-full text-[15px] font-semibold transition-all duration-200 active:scale-95 min-[1600px]:px-14 min-[1600px]:py-4 min-[1600px]:text-[26px] ${
+                  className={`flex-1 px-6 py-2.5 rounded-full text-[15px] font-semibold uppercase tracking-wide transition-all duration-200 active:scale-95 min-[1600px]:px-14 min-[1600px]:py-4 min-[1600px]:text-[26px] ${
                     view === v
                       ? "bg-primary text-primary-foreground shadow-md"
                       : "bg-card border border-card-border text-foreground"
@@ -563,16 +561,10 @@ export function Terminal() {
 
           <div
             ref={menuRef}
-            className="flex-1 overflow-y-auto scrollbar-hide px-4 pt-2 pb-8"
+            className="flex-1 overflow-y-auto scrollbar-hide px-3 pt-2 pb-24 min-[1600px]:px-5 min-[1600px]:pb-28"
           >
             {visibleCategories.map((category) => {
-              const assetBase = import.meta.env.BASE_URL.replace(/\/$/, "");
-              const categoryImages = (category.images ?? []).map(
-                (src) => `${assetBase}/${src.replace(/^\//, "")}`,
-              );
-              const useTile =
-                view === "drinks" ||
-                ["bowls", "kem", "kids", "vorspeisen"].includes(category.id);
+              const categoryImage = category.images?.[0];
               return (
                 <div
                   key={category.id}
@@ -580,64 +572,41 @@ export function Terminal() {
                   ref={(el) => { categoryRefs.current[category.id] = el; }}
                   className="mb-10 lys-cv-section"
                 >
-                  <div className="flex items-center gap-3 mb-4 pt-2">
-                    <h2 className="lys-display text-[22px] font-semibold text-primary min-[1600px]:text-[112px]">
+                  <div className="flex items-baseline gap-4 mb-5 pt-2">
+                    <h2 className="lys-display text-[44px] min-[1600px]:text-[88px] font-semibold text-primary shrink-0 leading-tight">
                       {getCategoryName(category.id)}
                     </h2>
                     <div className="flex-1 h-px bg-primary/20" />
                   </div>
 
-                  <div className="flex flex-col lg:flex-row gap-4 min-[1600px]:gap-10 lg:items-start">
-                    {categoryImages.length > 0 && (
-                      <div className="hidden lg:flex lg:flex-col gap-4 min-[1600px]:gap-6 shrink-0 w-52 min-[1600px]:w-[42rem] min-[1600px]:sticky min-[1600px]:top-2">
-                        {categoryImages.map((src) => (
-                          <img
-                            key={src}
-                            src={src}
-                            alt={getCategoryName(category.id)}
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full aspect-[2/3] object-cover rounded-2xl border border-border shadow-md"
+                  {category.id === "nudel-reisboxen" && (
+                    <div className="mb-4 px-4 py-3 bg-muted/60 border border-border rounded-xl text-[13px] text-muted-foreground min-[1600px]:text-[20px] min-[1600px]:px-6 min-[1600px]:py-4">
+                      {tr.noodleBoxNote}
+                    </div>
+                  )}
+
+                  <div className={`grid ${view === "drinks" ? "grid-cols-2" : "grid-cols-3"} gap-3 min-[1600px]:gap-6 items-stretch`}>
+                    {category.boxItems
+                      ? category.boxItems.map((box, i) => (
+                          <BoxItemCard
+                            key={box.id}
+                            item={box}
+                            onAdd={handleAdd}
+                            index={i}
+                            categoryImage={categoryImage}
+                          />
+                        ))
+                      : category.items.map((item, i) => (
+                          <MenuItemCard
+                            key={item.id}
+                            item={item}
+                            quantityInCart={quantityInCart}
+                            onAdd={handleAdd}
+                            onRemove={removeItem}
+                            index={i}
+                            categoryImage={categoryImage}
                           />
                         ))}
-                      </div>
-                    )}
-
-                    <div className="flex-1 min-w-0">
-                      {category.id === "nudel-reisboxen" && (
-                        <div className="mb-4 px-4 py-3 bg-muted/60 border border-border rounded-xl text-[13px] text-muted-foreground min-[1600px]:text-[20px] min-[1600px]:px-6 min-[1600px]:py-4">
-                          {tr.noodleBoxNote}
-                        </div>
-                      )}
-                      <div
-                        className={
-                          useTile
-                            ? "grid grid-cols-2 gap-3 min-[1600px]:gap-5 min-[1600px]:max-w-[48rem] min-[1600px]:mx-auto"
-                            : "space-y-2 min-[1600px]:space-y-4 min-[1600px]:max-w-[48rem] min-[1600px]:mx-auto"
-                        }
-                      >
-                        {category.boxItems
-                          ? category.boxItems.map((box, i) => (
-                              <BoxItemCard
-                                key={box.id}
-                                item={box}
-                                onAdd={handleAdd}
-                                index={i}
-                              />
-                            ))
-                          : category.items.map((item, i) => (
-                              <MenuItemCard
-                                key={item.id}
-                                item={item}
-                                quantityInCart={quantityInCart}
-                                onAdd={handleAdd}
-                                onRemove={removeItem}
-                                index={i}
-                                tile={useTile}
-                              />
-                            ))}
-                      </div>
-                    </div>
                   </div>
                 </div>
               );
@@ -645,20 +614,7 @@ export function Terminal() {
           </div>
         </div>
 
-        {itemCount > 0 && (
-          <button
-            data-testid="button-open-cart"
-            onClick={() => setShowCartMobile(true)}
-            aria-label={`${tr.articles(itemCount)} · ${formatPrice(discountedPrice(total))}`}
-            className="md:hidden shrink-0 w-20 border-l border-black/10 bg-primary text-primary-foreground flex flex-col items-center justify-center gap-5 active:scale-[0.99] transition-transform shadow-lg"
-          >
-            <ShoppingCart strokeWidth={2} className="w-7 h-7" />
-            <span className="text-[20px] font-bold tabular-nums">{itemCount}</span>
-            <span className="text-[15px] font-semibold tabular-nums">{formatPrice(discountedPrice(total))}</span>
-          </button>
-        )}
-
-        <div className="relative z-10 hidden md:flex w-80 min-[1600px]:w-[34rem] shrink-0 my-3 mr-3 min-[1600px]:my-5 min-[1600px]:mr-5 rounded-3xl border border-card-border bg-card shadow-[0_12px_40px_-10px_rgba(96,77,65,0.28)] overflow-hidden flex-col">
+        <div className="relative z-10 flex w-80 min-[1600px]:w-[34rem] shrink-0 my-3 mr-3 min-[1600px]:my-5 min-[1600px]:mr-5 rounded-3xl border border-card-border bg-card shadow-[0_12px_40px_-10px_rgba(96,77,65,0.28)] overflow-hidden flex-col">
           <CartPanel
             items={items}
             total={total}
@@ -671,32 +627,6 @@ export function Terminal() {
           />
         </div>
       </div>
-
-      {showCartMobile && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={() => setShowCartMobile(false)}
-        >
-          <div className="absolute inset-0 bg-black/40" />
-          <div
-            className="relative bg-background rounded-2xl max-h-[85vh] w-full max-w-2xl min-[1600px]:max-w-[1100px] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex-1 overflow-hidden flex flex-col">
-              <CartPanel
-                items={items}
-                total={total}
-                onAdd={addItem}
-                onRemove={removeItem}
-                onRemoveLine={removeLine}
-                onEdit={handleEditItem}
-                onCheckout={() => { setShowCartMobile(false); setShowPayment(true); }}
-                onClear={clearCart}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {showAllergens && <AllergenLegendModal onClose={() => setShowAllergens(false)} />}
 

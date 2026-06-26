@@ -35,6 +35,18 @@ const CATEGORY_TINTS: Record<string, Tint> = {
 
 const DEFAULT_TINT: Tint = { bar: "hsl(33 16% 93%)", active: "hsl(33 20% 85%)" };
 
+/** Untergruppen der Kategorieleiste (deutsch). Chips werden in beschriftete
+ *  Cluster gebündelt → übersichtlicher. Reihenfolge folgt dem Menü-Scroll. */
+const CATEGORY_GROUPS: { label: string; ids: string[] }[] = [
+  { label: "Boxen", ids: ["nudel-reisboxen"] },
+  { label: "Vorspeisen", ids: ["vorspeisen"] },
+  { label: "Soßengerichte", ids: ["thai-curry", "süss-sauer", "soja-sosse", "erdnuss-sosse", "matcha-sosse", "mango-sosse"] },
+  { label: "Reis", ids: ["gebratener-reis"] },
+  { label: "Matcha & Kaffee", ids: ["matcha-getraenke", "ca-phe"] },
+  { label: "Tee & Soda", ids: ["tra-eistee", "soda"] },
+  { label: "Smoothies & Softdrinks", ids: ["smoothies", "softgetraenke"] },
+];
+
 export function CategoryNav({ categories, activeCategory, onSelect, getCategoryName }: CategoryNavProps) {
   const btnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const tint = CATEGORY_TINTS[activeCategory] ?? DEFAULT_TINT;
@@ -47,33 +59,60 @@ export function CategoryNav({ categories, activeCategory, onSelect, getCategoryN
     });
   }, [activeCategory]);
 
+  // Sichtbare Kategorien in die definierten Gruppen einsortieren (Reihenfolge
+  // der Gruppe behält die `ids`-Sortierung). Unbekannte landen in „Weitere".
+  const byId = new Map(categories.map((c) => [c.id, c]));
+  const used = new Set<string>();
+  const groups = CATEGORY_GROUPS.map((g) => ({
+    label: g.label,
+    cats: g.ids.map((id) => byId.get(id)).filter((c): c is MenuCategory => !!c),
+  })).filter((g) => g.cats.length > 0);
+  groups.forEach((g) => g.cats.forEach((c) => used.add(c.id)));
+  const leftovers = categories.filter((c) => !used.has(c.id));
+  if (leftovers.length) groups.push({ label: "Weitere", cats: leftovers });
+
   return (
     <div
-      className="flex gap-2 overflow-x-auto scrollbar-hide px-3 py-2.5 mx-3 mb-3 rounded-full border border-card-border shadow-sm transition-colors duration-500 ease-out min-[1600px]:gap-4 min-[1600px]:px-5 min-[1600px]:py-4 min-[1600px]:mx-5 min-[1600px]:mb-5"
+      className="flex items-stretch gap-4 overflow-x-auto scrollbar-hide px-3 py-2.5 mx-3 mb-3 rounded-[28px] border border-card-border shadow-sm transition-colors duration-500 ease-out min-[1600px]:gap-7 min-[1600px]:px-5 min-[1600px]:py-4 min-[1600px]:mx-5 min-[1600px]:mb-5"
       style={{ backgroundColor: tint.bar }}
     >
-      {categories.map((cat, i) => {
-        const isActive = activeCategory === cat.id;
-        return (
-          <button
-            key={cat.id}
-            ref={(el) => { btnRefs.current[cat.id] = el; }}
-            data-testid={`button-category-${cat.id}`}
-            onClick={() => onSelect(cat.id)}
-            style={{
-              animationDelay: `${Math.min(i, 12) * 35}ms`,
-              backgroundColor: isActive ? tint.active : undefined,
-            }}
-            className={`shrink-0 px-5 py-2.5 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 whitespace-nowrap animate-in fade-in slide-in-from-left-3 fill-mode-both min-[1600px]:px-9 min-[1600px]:py-4 min-[1600px]:text-[22px] min-[1600px]:rounded-full ${
-              isActive
-                ? "text-foreground shadow-md scale-105 border border-black/5"
-                : "bg-card border border-card-border text-foreground hover:bg-muted"
-            }`}
-          >
-            {getCategoryName(cat.id)}
-          </button>
-        );
-      })}
+      {groups.map((group, gi) => (
+        <div key={group.label} className="flex items-stretch gap-4 shrink-0 min-[1600px]:gap-7">
+          {gi > 0 && <div className="w-px self-stretch my-0.5 bg-foreground/10 shrink-0" />}
+          <div className="flex flex-col gap-1.5 shrink-0 min-[1600px]:gap-2.5">
+            <span className="px-2 text-[10px] min-[1600px]:text-[16px] font-semibold uppercase tracking-[0.12em] text-foreground/45 whitespace-nowrap">
+              {group.label}
+            </span>
+            <div className="flex gap-2 min-[1600px]:gap-3">
+              {group.cats.map((cat) => {
+                const isActive = activeCategory === cat.id;
+                // „Soße"-Suffix im Soßen-Cluster ist unter der Gruppen-Überschrift
+                // redundant → für die Chip-Beschriftung entfernen.
+                const name = getCategoryName(cat.id);
+                const chipLabel = group.label === "Soßengerichte"
+                  ? name.replace(/\s*soße$/i, "")
+                  : name;
+                return (
+                  <button
+                    key={cat.id}
+                    ref={(el) => { btnRefs.current[cat.id] = el; }}
+                    data-testid={`button-category-${cat.id}`}
+                    onClick={() => onSelect(cat.id)}
+                    style={{ backgroundColor: isActive ? tint.active : undefined }}
+                    className={`shrink-0 px-5 py-2.5 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 whitespace-nowrap min-[1600px]:px-9 min-[1600px]:py-4 min-[1600px]:text-[22px] ${
+                      isActive
+                        ? "text-foreground shadow-md scale-105 border border-black/5"
+                        : "bg-card border border-card-border text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {chipLabel}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

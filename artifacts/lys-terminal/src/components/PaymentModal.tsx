@@ -29,26 +29,70 @@ interface UpsellCategory {
 
 const ASSET_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-const UPSELL_CATEGORIES: UpsellCategory[] = [
-  {
-    id: "matcha-getraenke",
-    label: "Matcha",
-    tagline: "Cremig · auf Wunsch als Frappe",
-    image: `${ASSET_BASE}/upsell/matcha.png`,
-  },
-  {
-    id: "soda",
-    label: "Soda",
-    tagline: "Spritzig & fruchtig",
-    image: `${ASSET_BASE}/upsell/soda.png`,
-  },
-  {
-    id: "tra-eistee",
-    label: "Eistee",
-    tagline: "Hausgemacht & frisch",
-    image: `${ASSET_BASE}/upsell/eistee.png`,
-  },
-];
+const img = (p: string) => `${ASSET_BASE}/${p}`;
+
+/** Alle möglichen Upsell-Vorschläge (kurzes DE-Label + repräsentatives Bild). */
+const UPSELL_OPTIONS: Record<string, Omit<UpsellCategory, "id">> = {
+  soda:               { label: "Soda",                tagline: "Spritzig & fruchtig",      image: img("menu-images/soda.png") },
+  softgetraenke:      { label: "Softdrinks & Wasser", tagline: "Erfrischend dazu",         image: img("menu-images/softgetraenke.jpg") },
+  "tra-eistee":       { label: "Eistee",              tagline: "Hausgemacht & frisch",     image: img("menu-images/eistee.png") },
+  "ca-phe":           { label: "Kaffee",              tagline: "Vietnamesischer Kaffee",   image: img("menu-images/real-caphe-suada.jpg") },
+  "matcha-getraenke": { label: "Matcha",              tagline: "Cremig · auch als Frappe", image: img("menu-images/matcha.png") },
+  smoothies:          { label: "Smoothie",            tagline: "Frisch püriert",           image: img("menu-images/real-smoothie.jpg") },
+  vorspeisen:         { label: "Vorspeisen",          tagline: "Knusprig als Beilage",     image: img("menu-images/springrolls-nem.webp") },
+  kem:                { label: "Dessert",             tagline: "Süßer Abschluss",          image: img("menu-images/real-kem-matcha.jpg") },
+};
+
+/** itemId → Kategorie (inkl. Box-Varianten GN1/KR2 … → „nudel-reisboxen"). */
+const ITEM_CATEGORY: Map<string, string> = (() => {
+  const m = new Map<string, string>();
+  for (const cat of menuData) {
+    for (const it of cat.items ?? []) m.set(it.id, cat.id);
+    for (const box of cat.boxItems ?? []) {
+      for (const carbs of [box.carbs.nudel, box.carbs.reis]) {
+        if (carbs.klein) m.set(carbs.klein, cat.id);
+        if (carbs.gross) m.set(carbs.gross, cat.id);
+      }
+    }
+  }
+  return m;
+})();
+
+const SAVORY_CATS = new Set([
+  "nudel-reisboxen", "thai-curry", "süss-sauer", "soja-sosse",
+  "erdnuss-sosse", "matcha-sosse", "mango-sosse", "gebratener-reis", "vorspeisen",
+]);
+const DRINK_CATS = new Set(["matcha-getraenke", "ca-phe", "tra-eistee", "soda", "smoothies", "softgetraenke"]);
+
+/** Wählt bis zu 3 passende Upsell-Kategorien anhand des Warenkorbs:
+ *  herzhaft → erfrischende Drinks, Bowl → Kaffee/Matcha/Wasser, Dessert → Kaffee,
+ *  nur Getränke → Snack/Dessert. Was schon im Korb liegt, wird nicht erneut
+ *  vorgeschlagen; danach auf 3 aufgefüllt. */
+function suggestUpsell(items: CartItem[]): UpsellCategory[] {
+  const cats = new Set(
+    items.map((i) => ITEM_CATEGORY.get(i.itemId)).filter((c): c is string => !!c),
+  );
+  const hasSavory = [...cats].some((c) => SAVORY_CATS.has(c));
+  const hasBowl = cats.has("bowls");
+  const hasDessert = cats.has("kem");
+  const hasDrink = [...cats].some((c) => DRINK_CATS.has(c));
+  const onlyDrinks = hasDrink && !hasSavory && !hasBowl && !hasDessert;
+
+  let ids: string[];
+  if (hasSavory) ids = ["soda", "softgetraenke", "tra-eistee"];
+  else if (hasBowl) ids = ["ca-phe", "matcha-getraenke", "softgetraenke"];
+  else if (hasDessert) ids = ["ca-phe", "matcha-getraenke", "tra-eistee"];
+  else if (onlyDrinks) ids = ["vorspeisen", "kem", "smoothies"];
+  else ids = ["soda", "tra-eistee", "matcha-getraenke"];
+
+  const fill = ["soda", "tra-eistee", "softgetraenke", "ca-phe", "matcha-getraenke", "smoothies"];
+  const picked: string[] = [];
+  for (const id of [...ids, ...fill]) {
+    if (picked.length >= 3) break;
+    if (UPSELL_OPTIONS[id] && !cats.has(id) && !picked.includes(id)) picked.push(id);
+  }
+  return picked.map((id) => ({ id, ...UPSELL_OPTIONS[id] }));
+}
 
 const N8N_TERMINAL_WEBHOOK_URL = "https://feal.app.n8n.cloud/webhook/order_made";
 
@@ -138,29 +182,22 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced, onAddItem }
   const [justAddedId, setJustAddedId] = useState<string | null>(null);
   const [boxOption, setBoxOption] = useState<BoxOption | null>(null);
 
+  const upsellCats = useMemo(() => suggestUpsell(items), [items]);
+
   const drinksByCategory = useMemo(() => {
     const map = new Map<string, MenuItem[]>();
-    for (const category of UPSELL_CATEGORIES) {
-      const items = menuData.find((c) => c.id === category.id)?.items ?? [];
-      map.set(category.id, items);
+    for (const category of upsellCats) {
+      map.set(category.id, menuData.find((c) => c.id === category.id)?.items ?? []);
     }
     return map;
-  }, []);
+  }, [upsellCats]);
 
   const activeCategory = useMemo(
-    () => UPSELL_CATEGORIES.find((c) => c.id === activeCategoryId) ?? null,
-    [activeCategoryId],
+    () => upsellCats.find((c) => c.id === activeCategoryId) ?? null,
+    [upsellCats, activeCategoryId],
   );
   const activeDrinks = activeCategoryId ? drinksByCategory.get(activeCategoryId) ?? [] : [];
   const hasBox = items.some((i) => BOX_ITEM_IDS.has(i.itemId));
-
-  const catLabel = (c: UpsellCategory) => (c.id === "tra-eistee" ? tr.drinkIcedTea : c.label);
-  const catTagline = (c: UpsellCategory) =>
-    c.id === "matcha-getraenke"
-      ? tr.upsellTaglineMatcha
-      : c.id === "soda"
-        ? tr.upsellTaglineSoda
-        : tr.upsellTaglineEistee;
 
   const handleSelectCategory = (id: string) => {
     setActiveCategoryId(id);
@@ -232,7 +269,7 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced, onAddItem }
             )}
             <div className="min-w-0">
               <h2 className="font-serif text-[24px] font-semibold text-foreground truncate">
-                {step === "drinks" && activeCategory ? catLabel(activeCategory) : tr.orderTitle}
+                {step === "drinks" && activeCategory ? activeCategory.label : tr.orderTitle}
               </h2>
               <p className="text-muted-foreground text-[13px] mt-0.5">{tr.total}: <Price value={total} /></p>
             </div>
@@ -263,13 +300,13 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced, onAddItem }
                 {tr.upsellHint}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {UPSELL_CATEGORIES.map((category, index) => (
+                {upsellCats.map((category, index) => (
                   <button
                     key={category.id}
                     onClick={() => handleSelectCategory(category.id)}
                     style={{ animationDelay: `${index * 90}ms` }}
                     className="group relative overflow-hidden rounded-2xl border border-border bg-card transition-transform duration-200 ease-out active:scale-[0.96] animate-in fade-in slide-in-from-bottom-3 fill-mode-both"
-                    aria-label={tr.selectAria.replace("{label}", catLabel(category))}
+                    aria-label={tr.selectAria.replace("{label}", category.label)}
                   >
                     <div className="aspect-[3/4] overflow-hidden">
                       <img
@@ -279,23 +316,24 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced, onAddItem }
                         className="upsell-kenburns w-full h-full object-cover"
                       />
                     </div>
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-4 pt-10 pb-4 text-left">
-                      <p className="font-serif text-[20px] font-semibold text-white leading-tight">
-                        {catLabel(category)}
-                      </p>
-                      <p className="text-white/80 text-[12px] mt-0.5">{catTagline(category)}</p>
-                    </div>
                     <span
                       aria-hidden
-                      style={{ animationDelay: `${index * 700}ms` }}
-                      className="upsell-ring-pulse pointer-events-none absolute inset-0 rounded-2xl ring-2 ring-inset ring-primary/50"
-                    />
+                      className="absolute top-3 right-3 w-10 h-10 min-[1600px]:w-14 min-[1600px]:h-14 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md ring-2 ring-white/70 transition-transform duration-200 group-active:scale-90"
+                    >
+                      <Plus size={22} strokeWidth={2.75} className="min-[1600px]:w-8 min-[1600px]:h-8" />
+                    </span>
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-4 pt-10 pb-4 text-left">
+                      <p className="font-serif text-[20px] min-[1600px]:text-[30px] font-semibold text-white leading-tight">
+                        {category.label}
+                      </p>
+                      <p className="text-white/80 text-[12px] min-[1600px]:text-[18px] mt-0.5">{category.tagline}</p>
+                    </div>
                   </button>
                 ))}
               </div>
               <button
                 onClick={() => setStep("checkout")}
-                className="mt-5 w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold active:scale-[0.99] transition-transform"
+                className="mt-4 w-full h-12 min-[1600px]:h-16 rounded-xl bg-muted text-foreground text-[15px] min-[1600px]:text-[22px] font-medium active:scale-[0.99] active:bg-muted/70 transition-all"
               >
                 {tr.upsellSkip}
               </button>
@@ -313,8 +351,8 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced, onAddItem }
                   />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-serif text-[18px] text-foreground leading-tight">{catLabel(activeCategory)}</p>
-                  <p className="text-muted-foreground text-[13px]">{catTagline(activeCategory)}</p>
+                  <p className="font-serif text-[18px] text-foreground leading-tight">{activeCategory.label}</p>
+                  <p className="text-muted-foreground text-[13px]">{activeCategory.tagline}</p>
                 </div>
               </div>
               <div className="space-y-2 mb-4 max-h-[55vh] overflow-auto pr-1">
@@ -430,13 +468,13 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced, onAddItem }
               <button
                 onClick={() => void handlePlaceOrder()}
                 disabled={(hasBox && !boxOption) || submitting}
-                className={`w-full h-14 rounded-xl text-[16px] font-semibold transition-all duration-150 ${
+                className={`relative overflow-hidden w-full h-14 min-[1600px]:h-20 rounded-xl text-[16px] min-[1600px]:text-[24px] font-semibold transition-all duration-150 ${
                   (!hasBox || boxOption) && !submitting
-                    ? "bg-primary text-primary-foreground shadow-md active:scale-[0.98]"
+                    ? "lys-cta bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98]"
                     : "bg-muted text-muted-foreground cursor-not-allowed"
                 }`}
               >
-                {tr.placeOrderCounter}
+                <span className="relative z-10">{tr.placeOrderCounter}</span>
               </button>
             </div>
           )}

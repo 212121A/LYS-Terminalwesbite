@@ -342,6 +342,34 @@
   contain-intrinsic-size: auto 1000px;
 }
 
+/* Einheitlicher Bild-Fallback: warmer Beige-Verlauf hinter dem Platzhalter-
+ *  Icon. Sorgt dafür, dass Cards ohne (noch) gesetztes Produktbild bewusst-leer
+ *  statt kaputt wirken. */
+.lys-img-fallback {
+  background-color: hsl(36 30% 90%);
+  background-image: linear-gradient(150deg, hsl(40 34% 92%) 0%, hsl(33 24% 85%) 100%);
+}
+
+/* Bottom-Sheet (Warenkorb) gleitet von unten herein. */
+@keyframes lys-sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.lys-sheet {
+  animation: lys-sheet-up 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Bottom-Bar-Counter zählt sichtbar hoch (kurzer Bounce gegen Doppel-Taps). */
+@keyframes lys-count-bounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.32); }
+  60% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+.lys-count-bounce {
+  animation: lys-count-bounce 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
 /* Shared micro-interactions (dezent-premium) */
 @keyframes lys-pop {
   0% { transform: scale(0.55); opacity: 0; }
@@ -403,10 +431,47 @@
   .lys-pop,
   .lys-badge-pop,
   .lys-float,
+  .lys-count-bounce,
   .lys-promo-glow {
     animation: none;
+  }
+  .lys-sheet {
+    animation-duration: 0.01ms;
   }
   .lys-promo-shimmer::after {
     display: none;
   }
+}
+
+/* Checkout-CTA: sanft pulsierender Grün-Glow mit aufgehender Ring-Welle + Lichtschimmer,
+ * führt den Blick zum „Jetzt bestellen". Nur am aktiven (grünen) Button. */
+@keyframes lys-cta-glow {
+  0%, 100% { box-shadow: 0 8px 22px -6px rgba(5, 150, 105, 0.45), 0 0 0 0 rgba(5, 150, 105, 0.45); }
+  50% { box-shadow: 0 13px 30px -6px rgba(5, 150, 105, 0.62), 0 0 0 10px rgba(5, 150, 105, 0); }
+}
+
+@keyframes lys-cta-shimmer {
+  0% { transform: translateX(-160%) skewX(-14deg); }
+  55%, 100% { transform: translateX(380%) skewX(-14deg); }
+}
+
+.lys-cta {
+  animation: lys-cta-glow 2.2s ease-in-out infinite;
+}
+
+.lys-cta::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 36%;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.34) 50%, transparent 100%);
+  animation: lys-cta-shimmer 3.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lys-cta { animation: none; }
+  .lys-cta::after { display: none; }
 }

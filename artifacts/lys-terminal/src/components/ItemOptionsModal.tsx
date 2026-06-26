@@ -192,7 +192,7 @@ export function ItemOptionsModal({
             disabled={!canConfirm}
             className={`h-16 text-[17px] font-semibold border-l border-border transition-all duration-150 ${
               canConfirm
-                ? "bg-primary text-primary-foreground active:scale-[0.99]"
+                ? "bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.99]"
                 : "bg-muted/30 text-muted-foreground/60 cursor-not-allowed"
             }`}
           >
