@@ -41,7 +41,8 @@ const BOWL_TOPPINGS: ToppingOption[] = [
   { id: "agave",       label: "Agavendicksaft", priceDelta: 0.5 },
   { id: "matcha",      label: "Matcha",         priceDelta: 2.0 },
   { id: "granola",     label: "Granola",        priceDelta: 2.0 },
-  { id: "schokoKokos", label: "Schoko/Kokos",   priceDelta: 1.0 },
+  { id: "schoko",      label: "Schoko",         priceDelta: 1.0 },
+  { id: "kokos",       label: "Kokos",          priceDelta: 1.0 },
 ];
 
 const SMOOTHIE_FRUITS: ToppingOption[] = [
