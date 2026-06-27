@@ -18,7 +18,7 @@ export function StartScreen() {
         <button
           data-testid="button-start-order"
           onClick={() => setLocation("/order")}
-          className="h-20 px-16 sm:px-24 rounded-full bg-primary text-primary-foreground text-2xl sm:text-3xl font-semibold tracking-tight shadow-xl shadow-primary/30 active:scale-[0.97] transition-transform animate-in fade-in zoom-in-95 duration-500 min-[1600px]:h-32 min-[1600px]:px-32 min-[1600px]:text-5xl"
+          className="lys-invite h-20 px-16 sm:px-24 rounded-full bg-primary text-primary-foreground text-2xl sm:text-3xl font-semibold tracking-tight active:scale-[0.97] transition-transform animate-in fade-in zoom-in-95 duration-500 min-[1600px]:h-32 min-[1600px]:px-32 min-[1600px]:text-5xl"
         >
           {tr.order}
         </button>
