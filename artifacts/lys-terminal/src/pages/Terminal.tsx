@@ -512,7 +512,7 @@ export function Terminal() {
           <button
             data-testid="button-cancel-order"
             onClick={handleCancelOrder}
-            className="flex items-center gap-1.5 h-11 px-3 rounded-full bg-destructive/10 border border-destructive/25 text-destructive text-[13px] font-medium hover:bg-destructive/15 active:scale-95 transition-all min-[1600px]:h-16 min-[1600px]:px-5 min-[1600px]:text-[20px] min-[1600px]:rounded-full"
+            className="flex items-center gap-1.5 h-11 px-3 rounded-full bg-transparent border border-cancel-border text-muted-foreground text-[13px] font-medium hover:bg-card/60 active:scale-95 transition-all min-[1600px]:h-16 min-[1600px]:px-5 min-[1600px]:text-[20px] min-[1600px]:rounded-full"
           >
             <Home strokeWidth={1.9} className="w-4 h-4 min-[1600px]:w-7 min-[1600px]:h-7" />
             <span className="hidden sm:inline">{tr.cancelOrder}</span>

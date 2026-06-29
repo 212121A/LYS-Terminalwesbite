@@ -165,7 +165,7 @@ export function CartPanel({ items, total, onRemove, onAdd, onEdit, onRemoveLine,
               <button
                 data-testid="button-place-order"
                 onClick={onCheckout}
-                className="w-full h-14 min-[1600px]:h-20 rounded-full bg-emerald-600 text-white text-[16px] min-[1600px]:text-[26px] font-semibold active:scale-[0.98] transition-all duration-150 shadow-[0_8px_22px_-6px_rgba(5,150,105,0.55)] hover:bg-emerald-700 flex items-center justify-center gap-2.5"
+                className="w-full h-14 min-[1600px]:h-20 rounded-full bg-emerald-600 text-white text-[16px] min-[1600px]:text-[26px] font-semibold active:scale-[0.98] transition-all duration-150 shadow-[0_8px_22px_-6px_rgba(124,138,90,0.55)] hover:bg-emerald-700 flex items-center justify-center gap-2.5"
               >
                 {tr.placeOrder}
                 <ArrowRight strokeWidth={2.4} className="w-5 h-5 min-[1600px]:w-8 min-[1600px]:h-8" />
