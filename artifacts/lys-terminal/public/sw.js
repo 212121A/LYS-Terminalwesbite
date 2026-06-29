@@ -10,7 +10,7 @@
  * Alles außer /menu-images/ wird NICHT angefasst (kein Risiko fürs App-Shell;
  * HTML/JS regelt Vercel via Cache-Control selbst).
  */
-const CACHE = "lys-menu-img-v1";
+const CACHE = "lys-menu-img-v2";
 
 self.addEventListener("install", () => {
   self.skipWaiting();

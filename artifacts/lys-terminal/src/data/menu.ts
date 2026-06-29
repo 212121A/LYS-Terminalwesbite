@@ -294,7 +294,7 @@ export const menuData: MenuCategory[] = [
   {
     id: "matcha-getraenke",
     name: "Matcha",
-    images: ["menu-images/matcha.png"],
+    images: ["menu-images/matcha.webp"],
     items: [
       { ...matchaDrink("01", "01", "Matcha Latte (warm/kalt)", 4.50), image: "menu-images/matcha-latte.webp" },
       { ...matchaDrink("02", "02", "Matcha dâu (Erdbeere)", 5.00), image: "menu-images/matcha-erdbeere.webp" },
@@ -303,13 +303,13 @@ export const menuData: MenuCategory[] = [
       { ...matchaDrink("05", "05", "Matcha việt quất (Blaubeere)", 5.00), image: "menu-images/matcha-blaubeere.webp" },
       { ...matchaDrink("06", "06", "Matcha dứa (Ananas)", 5.00), image: "menu-images/matcha-ananas.webp" },
       { ...matchaDrink("07", "07", "Matcha vani (Vanille)", 5.00), image: "menu-images/matcha-vanille.webp" },
-      { ...matchaDrink("08", "08", "Matcha dừa (Coconut Cloud)", 5.50, ["7", "15"]), image: "menu-images/matcha.png" },
+      { ...matchaDrink("08", "08", "Matcha dừa (Coconut Cloud)", 5.50, ["7", "15"]), image: "menu-images/matcha.webp" },
     ],
   },
   {
     id: "ca-phe",
     name: "Cà Phê Việt Nam",
-    images: ["menu-images/ca-phe.png"],
+    images: ["menu-images/ca-phe.webp"],
     items: [
       { id: "09", number: "09", name: "Cà phê đen (schwarzer Kaffee)",                  price: 4.50, allergens: [], additives: ["e"], image: "menu-images/caphe-den.webp" },
       { id: "10", number: "10", name: "Cà phê sữa đá (Kaffee, Kondensmilch & Eis)",     price: 5.00, allergens: ["7"], additives: ["e"], image: "menu-images/real-caphe-suada.jpg" },
@@ -332,7 +332,7 @@ export const menuData: MenuCategory[] = [
   {
     id: "tra-eistee",
     name: "Trà – Hausgemachter Eistee",
-    images: ["menu-images/eistee.png"],
+    images: ["menu-images/eistee.webp"],
     items: [
       { id: "15", number: "15", name: "Chanh leo (Passionsfrucht)",                     price: 6.00, allergens: [], additives: [], image: "menu-images/tea-passionfruit.webp" },
       { id: "16", number: "16", name: "Trà vải (Lychee, Zitrone & Orange)",             price: 6.00, allergens: [], additives: [], image: "menu-images/tea-lychee.webp" },
@@ -343,18 +343,18 @@ export const menuData: MenuCategory[] = [
   {
     id: "soda",
     name: "Soda",
-    images: ["menu-images/soda.png"],
+    images: ["menu-images/soda.webp"],
     items: [
       { id: "19", number: "19", name: "Soda chanh (Zitrone)", price: 6.00, allergens: [], additives: [], image: "menu-images/soda-zitrone.webp" },
       { id: "20", number: "20", name: "Soda đào (Pfirsich)",  price: 6.00, allergens: [], additives: [], image: "menu-images/soda-pfirsich.webp" },
       { id: "21", number: "21", name: "Soda vải (Lychee)",    price: 6.00, allergens: [], additives: [], image: "menu-images/soda-lychee.webp" },
-      { id: "22", number: "22", name: "Soda dứa (Ananas)",    price: 6.00, allergens: [], additives: [], image: "menu-images/soda.png" },
+      { id: "22", number: "22", name: "Soda dứa (Ananas)",    price: 6.00, allergens: [], additives: [], image: "menu-images/soda.webp" },
     ],
   },
   {
     id: "smoothies",
     name: "Sinh Tố – Smoothies",
-    images: ["menu-images/smoothie.png"],
+    images: ["menu-images/smoothie.webp"],
     items: [
       {
         id: "23", number: "23", name: "Smoothie nach Wahl", price: 6.50,
@@ -369,7 +369,7 @@ export const menuData: MenuCategory[] = [
   {
     id: "bowls",
     name: "Bowls",
-    images: ["menu-images/bowl.png"],
+    images: ["menu-images/bowl.webp"],
     items: [
       { id: "24", number: "24", name: "Overnight Oats mit Haferflocken & Milch", price: 6.50, dishType: "overnightOatsMilch", description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: ["1", "7"], additives: [], image: "menu-images/bowl-oats.webp" },
       { id: "25", number: "25", name: "Joghurt Bowl",   price: 6.50, dishType: "joghurtBowl",  description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: ["7"], additives: [], image: "menu-images/bowl-joghurt.webp" },
@@ -382,7 +382,7 @@ export const menuData: MenuCategory[] = [
   {
     id: "kem",
     name: "Kem – Eisspezialitäten",
-    images: ["menu-images/kem.png"],
+    images: ["menu-images/kem.webp"],
     items: [
       { id: "30", number: "30", name: "Matcha Latte với kem Matcha", price: 6.50, dishType: "matchaLatteMatchaEis", allergens: ["7"], additives: ["e"], image: "menu-images/real-kem-matcha.jpg" },
       { id: "31", number: "31", name: "Matcha Latte với kem vani",   price: 6.50, dishType: "matchaLatteVanilleeis", allergens: ["7"], additives: ["e"], image: "menu-images/real-kem-vani.jpg" },
@@ -391,7 +391,7 @@ export const menuData: MenuCategory[] = [
   {
     id: "kids",
     name: "Kids",
-    images: ["menu-images/kids.png"],
+    images: ["menu-images/kids.webp"],
     items: [
       { id: "32", number: "32", name: "Schoko Latte (Kids)", price: 4.50, dishType: "kidsSchokoLatte", allergens: ["7"], additives: [], image: "menu-images/real-kids-schoko.jpg" },
     ],

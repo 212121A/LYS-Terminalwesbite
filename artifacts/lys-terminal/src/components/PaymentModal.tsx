@@ -33,11 +33,11 @@ const img = (p: string) => `${ASSET_BASE}/${p}`;
 
 /** Alle möglichen Upsell-Vorschläge (kurzes DE-Label + repräsentatives Bild). */
 const UPSELL_OPTIONS: Record<string, Omit<UpsellCategory, "id">> = {
-  soda:               { label: "Soda",                tagline: "Spritzig & fruchtig",      image: img("menu-images/soda.png") },
+  soda:               { label: "Soda",                tagline: "Spritzig & fruchtig",      image: img("menu-images/soda.webp") },
   softgetraenke:      { label: "Softdrinks & Wasser", tagline: "Erfrischend dazu",         image: img("menu-images/softgetraenke.jpg") },
-  "tra-eistee":       { label: "Eistee",              tagline: "Hausgemacht & frisch",     image: img("menu-images/eistee.png") },
+  "tra-eistee":       { label: "Eistee",              tagline: "Hausgemacht & frisch",     image: img("menu-images/eistee.webp") },
   "ca-phe":           { label: "Kaffee",              tagline: "Vietnamesischer Kaffee",   image: img("menu-images/real-caphe-suada.jpg") },
-  "matcha-getraenke": { label: "Matcha",              tagline: "Cremig · auch als Frappe", image: img("menu-images/matcha.png") },
+  "matcha-getraenke": { label: "Matcha",              tagline: "Cremig · auch als Frappe", image: img("menu-images/matcha.webp") },
   smoothies:          { label: "Smoothie",            tagline: "Frisch püriert",           image: img("menu-images/real-smoothie.jpg") },
   vorspeisen:         { label: "Vorspeisen",          tagline: "Knusprig als Beilage",     image: img("menu-images/springrolls-nem.webp") },
   kem:                { label: "Dessert",             tagline: "Süßer Abschluss",          image: img("menu-images/real-kem-matcha.jpg") },

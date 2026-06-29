@@ -1,7 +1,7 @@
 import { menuData } from "@/data/menu";
 
 /** Muss zur CACHE-Konstante in public/sw.js passen. */
-const CACHE = "lys-menu-img-v1";
+const CACHE = "lys-menu-img-v2";
 
 /** Alle im Menü referenzierten Bild-URLs (Karten, Box-Karten, Kategorie-Header). */
 function collectMenuImageUrls(): string[] {
