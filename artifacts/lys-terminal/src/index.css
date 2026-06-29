@@ -83,9 +83,9 @@
   --elevate-2: rgba(96, 77, 65, 0.09);
 
   /* === LYS Button-Farben (ZENTRAL hier anpassen) === */
-  /* Gedaempftes Salbeigruen fuer ALLE "Hinzufuegen"/CTA-Buttons (passt zu Beige/Braun) */
-  --add-button: #7c8a5a;
-  --add-button-hover: #6a784b;
+  /* Matcha-Gruen fuer ALLE "Hinzufuegen"/CTA-Buttons (an die Matcha-Latte angepasst) */
+  --add-button: #96ab58;
+  --add-button-hover: #7f9446;
   /* Dezenter, neutraler Rahmen fuer den "Abbrechen"-Button (warmes Braun, niedrige Deckkraft) */
   --cancel-border: rgba(96, 77, 65, 0.22);
 
@@ -460,9 +460,9 @@
 /* Checkout-CTA: sanft pulsierender Grün-Glow mit aufgehender Ring-Welle + Lichtschimmer,
  * führt den Blick zum „Jetzt bestellen". Nur am aktiven (grünen) Button. */
 @keyframes lys-cta-glow {
-  /* Salbeigrün-Glow (124,138,90 = --add-button #7c8a5a) — passend zu allen grünen Buttons */
-  0%, 100% { box-shadow: 0 8px 22px -6px rgba(124, 138, 90, 0.45), 0 0 0 0 rgba(124, 138, 90, 0.45); }
-  50% { box-shadow: 0 13px 30px -6px rgba(124, 138, 90, 0.62), 0 0 0 10px rgba(124, 138, 90, 0); }
+  /* Matcha-Glow (150,171,88 = --add-button #96ab58) — passend zu allen gruenen Buttons */
+  0%, 100% { box-shadow: 0 8px 22px -6px rgba(150, 171, 88, 0.45), 0 0 0 0 rgba(150, 171, 88, 0.45); }
+  50% { box-shadow: 0 13px 30px -6px rgba(150, 171, 88, 0.62), 0 0 0 10px rgba(150, 171, 88, 0); }
 }
 
 @keyframes lys-cta-shimmer {

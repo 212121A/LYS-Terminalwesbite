@@ -195,7 +195,7 @@ export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNo
               disabled={!canConfirm}
               className={`flex-[1.6] h-12 min-[1600px]:h-16 rounded-xl min-[1600px]:rounded-2xl text-[15px] min-[1600px]:text-[22px] font-semibold transition-all duration-150 flex items-center justify-center gap-2 ${
                 canConfirm
-                  ? "bg-emerald-600 text-white shadow-[0_8px_22px_-6px_rgba(124,138,90,0.5)] hover:bg-emerald-700 active:scale-[0.98]"
+                  ? "bg-emerald-600 text-white shadow-[0_8px_22px_-6px_rgba(150,171,88,0.5)] hover:bg-emerald-700 active:scale-[0.98]"
                   : "bg-muted text-muted-foreground cursor-not-allowed"
               }`}
             >
