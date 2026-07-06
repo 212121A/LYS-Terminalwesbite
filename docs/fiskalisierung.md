@@ -110,4 +110,5 @@ fiskaly-Dashboard). USt-Mapping: Speisen 7 % / Getränke 19 % — Quelle
 - DSFinV-K-Schema (`buildCashPointClosing`) ist gegen die offizielle OpenAPI-Spec
   (`https://dsfinvk.fiskaly.com/api/v1/_spec.json`) verifiziert: Beträge als Zahlen,
   `security.tss_tx_id` = SIGN-UUID pro Transaktion, Export-Zeitraum im Body
-  (`business_date_start/_end`). Erstes Test-Closing auf Preview bestätigt es end-to-end.
+  (`business_date_start/_end`). **End-to-end bestätigt (2026-07-07, TEST-Umgebung):**
+  echtes Cash-Point-Closing → `state=COMPLETED`, Export-TAR → `COMPLETED`.
