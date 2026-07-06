@@ -4,7 +4,7 @@
  * Bewusst im Code statt ENV: nicht geheim, gehört in die Code-Review.
  */
 export const FISCAL_BUSINESS = {
-  name: "LYS – Ly Asiatische Spezialitäten",
+  name: "LYS Noodles & Rice",
   address: {
     street: "Kappelgasse 2",
     postalCode: "73525",

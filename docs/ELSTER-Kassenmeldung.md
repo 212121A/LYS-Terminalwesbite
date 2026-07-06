@@ -9,7 +9,7 @@
 
 | Feld | Wert |
 |---|---|
-| Name des Betriebs | LYS – Ly Asiatische Spezialitäten <!-- ggf. offiziellen Firmennamen prüfen --> |
+| Name des Betriebs | LYS Noodles & Rice <!-- ggf. offiziellen Firmennamen prüfen --> |
 | Inhaber | <!-- FILL: Inhaber lt. Gewerbeanmeldung --> |
 | Steuernummer | <!-- FILL: vom Steuerberater --> |
 | Betriebsstätte (Aufstellort der Kasse) | Kappelgasse 2, 73525 Schwäbisch Gmünd |
