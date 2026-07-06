@@ -2,7 +2,7 @@
 
 > Kartenzahlung direkt am Kiosk (Stripe Terminal) mit fiskaly Cloud-TSE,
 > digitalem QR-Beleg (§6 KassenSichV) und DSFinV-K-Tagesabschluss.
-> Stand: 2026-07-06.
+> Stand: 2026-07-07.
 
 ## Die zwei Bezahlwege
 
@@ -83,6 +83,13 @@ fiskaly-Dashboard). USt-Mapping: Speisen 7 % / Getränke 19 % — Quelle
   (simulierter Reader) und dann `scripts/stripe-simulate-tap.mjs [--decline]`
   während der Kiosk im Warte-Screen steht.
 - **ENV-Inventar:** siehe `.env.example` (FISKALY_*, STRIPE_TERMINAL_READER_ID, CRON_SECRET).
+- **fiskaly-Umgebungen** (Referenz „Base URLs & Environments"): API-Keys entstehen im
+  **HUB** (hub.fiskaly.com, TEST/LIVE-Schalter oben) und gelten **nur** für ihre Umgebung.
+  SIGN DE hat pro Umgebung einen eigenen Host — `FISKALY_BASE_URL`:
+  TEST `https://kassensichv-middleware.fiskaly.com/api/v2`,
+  LIVE `https://kassensichv.fiskaly.com/api/v2` (**Cutover: URL + Keys zusammen umstellen!**).
+  DSFinV-K nutzt für beide Umgebungen dieselbe URL (Umgebung hängt am Key).
+  Auth: `POST /auth {api_key, api_secret}` → `access_token` (24 h gültig; client.ts cacht 30 min).
 - **DB:** `lib/db/supabase_fiscal_transactions.sql` (RLS an, keine Policies —
   nur service_role; Beleg-Zugriff läuft über `/api/receipt/:id`).
 - **Firmendaten:** zwei Pflegeorte. Für den selbst gerenderten **Beleg**:
