@@ -33,7 +33,9 @@ export type FiskalyTxResponse = {
   qr_code_data?: string;
   signature?: {
     value?: string;
-    counter?: string; // Spec: string (format bigint)
+    // Test-API liefert number; Spec deklariert string (format bigint) für große
+    // Werte. Beides zulassen — landet ohnehin in einer bigint-Spalte.
+    counter?: number | string;
     algorithm?: string;
   };
   log?: {
