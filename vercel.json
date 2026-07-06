@@ -13,5 +13,8 @@
     "api/index.mjs": {
       "maxDuration": 30
     }
-  }
+  },
+  "crons": [
+    { "path": "/api/fiscal/closing", "schedule": "30 2 * * *" }
+  ]
 }

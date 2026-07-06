@@ -131,6 +131,18 @@ export interface Translations {
   cartBarContinue?: string;
   /** Bottom-Bar: Hinweis bei leerem Warenkorb. */
   cartBarEmpty?: string;
+  /** Kartenzahlung am Terminal (optional — Fallback auf Englisch in PaymentModal). */
+  payChooseMethod?: string;
+  payAtCounterOption?: string;
+  payByCardOption?: string;
+  payTerminalWaitTitle?: string;
+  payTerminalWaitHint?: string;
+  payTerminalCancel?: string;
+  payTerminalFailed?: string;
+  payTerminalCanceled?: string;
+  orderSuccessPaidSubtitle?: string;
+  orderSuccessStepPaid?: string;
+  orderSuccessReceiptHint?: string;
   soldOut: string;
   categories: Record<string, string>;
   dishNames: Record<string, string>;
@@ -233,6 +245,17 @@ const t: Record<LangCode, Translations> = {
     articles: (n) => `${n} Artikel`,
     cartBarContinue: "Weiter",
     cartBarEmpty: "Wähle Gerichte aus",
+    payChooseMethod: "Wie möchtest du bezahlen?",
+    payAtCounterOption: "An der Kasse zahlen",
+    payByCardOption: "Jetzt mit Karte zahlen",
+    payTerminalWaitTitle: "Bitte Karte am Lesegerät präsentieren",
+    payTerminalWaitHint: "Folge den Anweisungen auf dem Kartenlesegerät neben dem Bildschirm.",
+    payTerminalCancel: "Abbrechen",
+    payTerminalFailed: "Die Kartenzahlung hat nicht geklappt. Bitte erneut versuchen oder an der Kasse zahlen.",
+    payTerminalCanceled: "Zahlung abgebrochen.",
+    orderSuccessPaidSubtitle: "Deine Bestellung ist bezahlt und wird zubereitet.",
+    orderSuccessStepPaid: "Bezahlt mit Karte — kein Gang zur Kasse nötig.",
+    orderSuccessReceiptHint: "QR-Code scannen, um den Kassenbeleg aufs Handy zu holen",
     categories: {
       vorspeisen: "Vorspeisen",
       "thai-curry": "Thai Curry",
@@ -547,6 +570,17 @@ const t: Record<LangCode, Translations> = {
     articles: (n) => `${n} item${n !== 1 ? "s" : ""}`,
     cartBarContinue: "Continue",
     cartBarEmpty: "Pick some dishes",
+    payChooseMethod: "How would you like to pay?",
+    payAtCounterOption: "Pay at the counter",
+    payByCardOption: "Pay by card now",
+    payTerminalWaitTitle: "Please present your card at the reader",
+    payTerminalWaitHint: "Follow the instructions on the card reader next to the screen.",
+    payTerminalCancel: "Cancel",
+    payTerminalFailed: "The card payment didn't go through. Please try again or pay at the counter.",
+    payTerminalCanceled: "Payment canceled.",
+    orderSuccessPaidSubtitle: "Your order is paid and being prepared.",
+    orderSuccessStepPaid: "Paid by card — no need to visit the counter.",
+    orderSuccessReceiptHint: "Scan the QR code to get your receipt on your phone",
     categories: {
       vorspeisen: "Starters",
       "thai-curry": "Thai Curry",

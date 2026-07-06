@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { X, Plus, AlertCircle, Loader2, ChevronLeft, Check, Package, PackageOpen } from "lucide-react";
 import { CartItem } from "@/store/cart";
 import { menuData, boxMenuItems, type MenuItem } from "@/data/menu";
@@ -6,6 +6,7 @@ import { BOX_ITEM_IDS } from "@/data/boxSauces";
 import { buildKitchenIndex, toKitchenLineItem } from "@/lib/kitchenOrder";
 import { discountedPrice } from "@/lib/discount";
 import { useLang } from "@/i18n/LanguageContext";
+import translationsAll from "@/i18n/translations";
 import { Price } from "@/components/Price";
 
 interface PaymentModalProps {
@@ -114,22 +115,30 @@ type PayAtCounterResponse = {
 // Einmalig: Index Warenkorb-itemId → deutscher Name + Menü-Code (sprachneutral).
 const KITCHEN_INDEX = buildKitchenIndex(menuData, boxMenuItems);
 
-async function submitPayAtCounter(items: CartItem[], boxOption: BoxOption | null): Promise<PayAtCounterResponse> {
-  const baseUrl = window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, "");
-  // Die Küche bekommt IMMER deutsche Posten (Name/Code aus dem Menü-Register),
-  // unabhängig von der im Terminal gewählten Sprache.
-  const lineItems = items.map((item) => {
+/** Küchen-Posten (immer Deutsch, rabattierter Preis, Box-Zustand am Artikel) —
+ *  identisch für „Kasse" und „Karte am Terminal". */
+function buildLineItems(items: CartItem[], boxOption: BoxOption | null) {
+  return items.map((item) => {
     const line = toKitchenLineItem(KITCHEN_INDEX, item);
     return {
       ...line,
       // Während der Eröffnungswoche zahlt der Gast den rabattierten Preis — also
       // geht auch der rabattierte Preis ans Küchen-/Bestell-Backend.
       price: discountedPrice(line.price),
+      // itemId zusätzlich mitschicken: der Server bestimmt daraus den USt-Satz.
+      itemId: item.itemId,
       // Box-Zustand (offen/zu) am Box-Artikel mitschicken, damit das Küchen-
       // Dashboard ihn aus dem items-JSON lesen kann (n8n speichert items 1:1).
       ...(BOX_ITEM_IDS.has(item.itemId) && boxOption ? { box_option: boxOption } : {}),
     };
   });
+}
+
+async function submitPayAtCounter(items: CartItem[], boxOption: BoxOption | null): Promise<PayAtCounterResponse> {
+  const baseUrl = window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, "");
+  // Die Küche bekommt IMMER deutsche Posten (Name/Code aus dem Menü-Register),
+  // unabhängig von der im Terminal gewählten Sprache.
+  const lineItems = buildLineItems(items, boxOption);
 
   const response = await fetchWithTimeout(
     N8N_TERMINAL_WEBHOOK_URL,
@@ -172,6 +181,44 @@ async function submitPayAtCounter(items: CartItem[], boxOption: BoxOption | null
   };
 }
 
+// ── Kartenzahlung am Terminal (Stripe Terminal + TSE, server-driven) ──
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const CARD_POLL_INTERVAL_MS = 1500;
+const CARD_POLL_TIMEOUT_MS = 90_000;
+
+type TerminalStatusResponse = {
+  state?: string;
+  order_number?: string | null;
+  receipt_id?: string;
+  error?: string;
+};
+
+async function startCardCheckout(items: CartItem[], boxOption: BoxOption | null): Promise<string> {
+  const response = await fetchWithTimeout(
+    `${API_BASE}/api/terminal/checkout`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ box_option: boxOption, items: buildLineItems(items, boxOption) }),
+    },
+    20_000,
+  );
+  const data = (await response.json()) as { id?: string; error?: string };
+  if (!response.ok || !data.id) {
+    throw new Error(data.error || `Kartenzahlung konnte nicht gestartet werden (HTTP ${response.status}).`);
+  }
+  return data.id;
+}
+
+async function fetchCardStatus(fiscalId: string): Promise<TerminalStatusResponse> {
+  const response = await fetchWithTimeout(`${API_BASE}/api/terminal/status/${fiscalId}`, undefined, 15_000);
+  return (await response.json()) as TerminalStatusResponse;
+}
+
+async function cancelCardPayment(fiscalId: string): Promise<void> {
+  await fetchWithTimeout(`${API_BASE}/api/terminal/cancel/${fiscalId}`, { method: "POST" }, 15_000).catch(() => {});
+}
+
 export function PaymentModal({ items, total, onClose, onOrderPlaced, onAddItem }: PaymentModalProps) {
   const { tr } = useLang();
   const [step, setStep] = useState<UpsellStep>("categories");
@@ -181,6 +228,23 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced, onAddItem }
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [justAddedId, setJustAddedId] = useState<string | null>(null);
   const [boxOption, setBoxOption] = useState<BoxOption | null>(null);
+  // Kartenzahlung: null = keine aktiv; sonst Warte-Vollbild mit Abbrechen.
+  const [cardFiscalId, setCardFiscalId] = useState<string | null>(null);
+  const [cardWaiting, setCardWaiting] = useState(false);
+  const cancelRequestedRef = useRef(false);
+
+  // Neue Payment-Texte: nur de/en gepflegt, Rest fällt auf Englisch zurück.
+  const en = translationsAll.en;
+  const tp = {
+    chooseMethod: tr.payChooseMethod ?? en.payChooseMethod ?? "",
+    atCounter: tr.payAtCounterOption ?? en.payAtCounterOption ?? "",
+    byCard: tr.payByCardOption ?? en.payByCardOption ?? "",
+    waitTitle: tr.payTerminalWaitTitle ?? en.payTerminalWaitTitle ?? "",
+    waitHint: tr.payTerminalWaitHint ?? en.payTerminalWaitHint ?? "",
+    cancel: tr.payTerminalCancel ?? en.payTerminalCancel ?? "",
+    failed: tr.payTerminalFailed ?? en.payTerminalFailed ?? "",
+    canceled: tr.payTerminalCanceled ?? en.payTerminalCanceled ?? "",
+  };
 
   const upsellCats = useMemo(() => suggestUpsell(items), [items]);
 
@@ -216,7 +280,7 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced, onAddItem }
   };
 
   const handlePlaceOrder = async () => {
-    if (submitting || (hasBox && !boxOption)) return;
+    if (submitting || cardWaiting || (hasBox && !boxOption)) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -229,6 +293,73 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced, onAddItem }
       setSubmitting(false);
     }
   };
+
+  /** Kartenzahlung: Checkout starten, dann Status pollen bis completed/failed. */
+  const handleCardPayment = async () => {
+    if (submitting || cardWaiting || (hasBox && !boxOption)) return;
+    setError(null);
+    setCardWaiting(true);
+    cancelRequestedRef.current = false;
+    try {
+      const fiscalId = await startCardCheckout(items, hasBox ? boxOption : null);
+      setCardFiscalId(fiscalId);
+
+      const deadline = Date.now() + CARD_POLL_TIMEOUT_MS;
+      while (Date.now() < deadline) {
+        await new Promise((resolve) => window.setTimeout(resolve, CARD_POLL_INTERVAL_MS));
+        if (cancelRequestedRef.current) return; // Abbruch-Handler übernimmt UI
+        const status = await fetchCardStatus(fiscalId).catch(() => ({ state: "waiting" }) as TerminalStatusResponse);
+
+        if (status.state === "completed") {
+          onOrderPlaced?.();
+          const baseUrl = window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, "");
+          const params = new URLSearchParams();
+          if (status.order_number) params.set("order_no", String(status.order_number));
+          if (status.receipt_id) params.set("receipt_id", status.receipt_id);
+          window.location.href = `${baseUrl}/success?${params.toString()}`;
+          return;
+        }
+        if (status.state === "payment_failed" || status.state === "canceled") {
+          throw new Error(tp.failed);
+        }
+        // waiting/finalizing → weiter pollen
+      }
+      // Timeout: Vorgang serverseitig abbrechen, damit keine TSE-Leiche bleibt.
+      await cancelCardPayment(fiscalId);
+      throw new Error(tp.failed);
+    } catch (e: unknown) {
+      setCardWaiting(false);
+      setCardFiscalId(null);
+      setError(e instanceof Error ? e.message : tr.genericError);
+    }
+  };
+
+  const handleCancelCardPayment = async () => {
+    cancelRequestedRef.current = true;
+    if (cardFiscalId) await cancelCardPayment(cardFiscalId);
+    setCardWaiting(false);
+    setCardFiscalId(null);
+    setError(tp.canceled);
+  };
+
+  if (cardWaiting) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center text-center px-8">
+        <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-8">
+          <Loader2 size={38} className="text-primary animate-spin" strokeWidth={1.5} />
+        </div>
+        <h2 className="font-serif text-3xl font-semibold text-foreground mb-3">{tp.waitTitle}</h2>
+        <p className="text-muted-foreground text-[15px] max-w-md">{tp.waitHint}</p>
+        <p className="text-foreground text-[17px] font-medium mt-4"><Price value={total} /></p>
+        <button
+          onClick={() => void handleCancelCardPayment()}
+          className="mt-10 h-12 px-8 rounded-xl bg-muted text-foreground text-[15px] font-medium active:scale-[0.98] transition-all"
+        >
+          {tp.cancel}
+        </button>
+      </div>
+    );
+  }
 
   if (submitting) {
     return (
@@ -465,16 +596,30 @@ export function PaymentModal({ items, total, onClose, onOrderPlaced, onAddItem }
                 <span className="text-[20px] font-semibold text-primary tabular-nums"><Price value={total} /></span>
               </div>
 
+              <p className="text-[15px] font-medium text-foreground mb-3">{tp.chooseMethod}</p>
               <button
-                onClick={() => void handlePlaceOrder()}
-                disabled={(hasBox && !boxOption) || submitting}
-                className={`relative overflow-hidden w-full h-14 min-[1600px]:h-20 rounded-xl text-[16px] min-[1600px]:text-[24px] font-semibold transition-all duration-150 ${
-                  (!hasBox || boxOption) && !submitting
+                onClick={() => void handleCardPayment()}
+                disabled={(hasBox && !boxOption) || submitting || cardWaiting}
+                data-testid="button-pay-card"
+                className={`relative overflow-hidden w-full h-14 min-[1600px]:h-20 rounded-xl text-[16px] min-[1600px]:text-[24px] font-semibold transition-all duration-150 mb-3 ${
+                  (!hasBox || boxOption) && !submitting && !cardWaiting
                     ? "lys-cta bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98]"
                     : "bg-muted text-muted-foreground cursor-not-allowed"
                 }`}
               >
-                <span className="relative z-10">{tr.placeOrderCounter}</span>
+                <span className="relative z-10">{tp.byCard}</span>
+              </button>
+              <button
+                onClick={() => void handlePlaceOrder()}
+                disabled={(hasBox && !boxOption) || submitting || cardWaiting}
+                data-testid="button-pay-counter"
+                className={`w-full h-14 min-[1600px]:h-20 rounded-xl text-[16px] min-[1600px]:text-[24px] font-semibold transition-all duration-150 ${
+                  (!hasBox || boxOption) && !submitting && !cardWaiting
+                    ? "bg-card border-2 border-border text-foreground hover:bg-muted/40 active:scale-[0.98]"
+                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                }`}
+              >
+                {tp.atCounter}
               </button>
             </div>
           )}

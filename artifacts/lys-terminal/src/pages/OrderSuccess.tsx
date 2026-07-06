@@ -50,6 +50,10 @@ export function OrderSuccess() {
   }, [setLocation]);
   const sessionId = params.get("session_id");
   const orderNoFromQuery = params.get("order_no");
+  // Kartenzahlung am Terminal: receipt_id → QR zeigt auf den digitalen Beleg,
+  // Texte schalten auf „bezahlt" um (kein Gang zur Kasse mehr).
+  const receiptId = params.get("receipt_id");
+  const isPaid = Boolean(receiptId);
   const [orderNo, setOrderNo] = useState<string>(orderNoFromQuery ? String(orderNoFromQuery) : "…");
 
   useEffect(() => {
@@ -118,7 +122,7 @@ export function OrderSuccess() {
             {tr.orderSuccessTitle}
           </h1>
           <p className="text-[14px] sm:text-[15px] min-[1600px]:text-[26px] text-muted-foreground leading-relaxed mb-7 min-[1600px]:mb-12 max-w-sm min-[1600px]:max-w-2xl mx-auto">
-            {tr.orderSuccessSubtitle}
+            {isPaid ? (tr.orderSuccessPaidSubtitle ?? tr.orderSuccessSubtitle) : tr.orderSuccessSubtitle}
           </p>
 
           {/* Bestellnummer — der Hero, klar lesbar (Sans, Tabularziffern) */}
@@ -147,7 +151,7 @@ export function OrderSuccess() {
                 <div className="flex items-center gap-3.5 min-[1600px]:gap-6 rounded-2xl bg-primary/10 border border-primary/30 px-4 py-3.5 min-[1600px]:px-8 min-[1600px]:py-7">
                   <span className="w-8 h-8 min-[1600px]:w-14 min-[1600px]:h-14 shrink-0 rounded-full bg-primary text-primary-foreground grid place-items-center font-semibold text-[15px] min-[1600px]:text-[26px] tabular-nums">2</span>
                   <span className="text-[15px] sm:text-[16px] min-[1600px]:text-[28px] font-semibold text-foreground leading-snug">
-                    {tr.orderSuccessStepPay}
+                    {isPaid ? (tr.orderSuccessStepPaid ?? tr.orderSuccessStepPay) : tr.orderSuccessStepPay}
                   </span>
                 </div>
               </div>
@@ -156,7 +160,11 @@ export function OrderSuccess() {
               <div className="mt-6 min-[1600px]:mt-12 flex flex-col items-center gap-3 min-[1600px]:gap-5">
                 <div className="rounded-2xl bg-white p-3 min-[1600px]:p-6 shadow-sm border border-border">
                   <QRCodeSVG
-                    value={`https://order.lysnoodleandrice.com/nr/${encodeURIComponent(orderNo)}`}
+                    value={
+                      receiptId
+                        ? `https://order.lysnoodleandrice.com/beleg/${encodeURIComponent(receiptId)}`
+                        : `https://order.lysnoodleandrice.com/nr/${encodeURIComponent(orderNo)}`
+                    }
                     level="L"
                     bgColor="#ffffff"
                     fgColor="#4A443F"
@@ -165,17 +173,19 @@ export function OrderSuccess() {
                   />
                 </div>
                 <p className="text-[13px] sm:text-[15px] min-[1600px]:text-[24px] text-muted-foreground max-w-xs min-[1600px]:max-w-2xl leading-relaxed">
-                  {tr.orderSuccessScanHint}
+                  {isPaid ? (tr.orderSuccessReceiptHint ?? tr.orderSuccessScanHint) : tr.orderSuccessScanHint}
                 </p>
               </div>
 
-              {/* Ausblick: Kartenzahlung am Terminal */}
-              <div className="mt-7 min-[1600px]:mt-12 flex items-center justify-center gap-2 min-[1600px]:gap-3 text-muted-foreground/80">
-                <CreditCard className="w-4 h-4 min-[1600px]:w-7 min-[1600px]:h-7 shrink-0" aria-hidden />
-                <span className="text-[12.5px] sm:text-[13px] min-[1600px]:text-[22px] leading-snug">
-                  {tr.orderSuccessCardSoon}
-                </span>
-              </div>
+              {/* Ausblick: Kartenzahlung am Terminal (nur im unbezahlten Flow) */}
+              {!isPaid && (
+                <div className="mt-7 min-[1600px]:mt-12 flex items-center justify-center gap-2 min-[1600px]:gap-3 text-muted-foreground/80">
+                  <CreditCard className="w-4 h-4 min-[1600px]:w-7 min-[1600px]:h-7 shrink-0" aria-hidden />
+                  <span className="text-[12.5px] sm:text-[13px] min-[1600px]:text-[22px] leading-snug">
+                    {tr.orderSuccessCardSoon}
+                  </span>
+                </div>
+              )}
             </>
           )}
         </div>

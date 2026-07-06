@@ -13,6 +13,7 @@ import { AvailabilityProvider } from "@/availability/AvailabilityContext";
 const OrderSuccess = lazy(() => import("@/pages/OrderSuccess").then((m) => ({ default: m.OrderSuccess })));
 const OrderCancel = lazy(() => import("@/pages/OrderCancel").then((m) => ({ default: m.OrderCancel })));
 const OrderQR = lazy(() => import("@/pages/OrderQR").then((m) => ({ default: m.OrderQR })));
+const ReceiptPage = lazy(() => import("@/pages/ReceiptPage").then((m) => ({ default: m.ReceiptPage })));
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ function Router() {
         <Route path="/cancel" component={OrderCancel} />
         <Route path="/order" component={Terminal} />
         <Route path="/nr/:orderNo" component={OrderQR} />
+        <Route path="/beleg/:id" component={ReceiptPage} />
         <Route path="/" component={StartScreen} />
         <Route path="*" component={StartScreen} />
       </Switch>
