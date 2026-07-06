@@ -23,7 +23,7 @@ export class FiskalyError extends Error {
   }
 }
 
-/** Signatur-/Log-Daten einer TSE-Transaktion (Felder via Smoke-Script bestätigt). */
+/** Signatur-/Log-Daten einer TSE-Transaktion (Felder gegen die OpenAPI-Spec verifiziert). */
 export type FiskalyTxResponse = {
   _id?: string;
   number: number;
@@ -33,7 +33,7 @@ export type FiskalyTxResponse = {
   qr_code_data?: string;
   signature?: {
     value?: string;
-    counter?: number;
+    counter?: string; // Spec: string (format bigint)
     algorithm?: string;
   };
   log?: {
@@ -147,7 +147,7 @@ export async function listOpenTransactions(): Promise<FiskalyTxResponse[]> {
   const { tssId } = getFiskalyEnv();
   const body = await fiskalyRequest<{ data?: FiskalyTxResponse[] }>(
     "GET",
-    `/tss/${tssId}/tx?states[]=ACTIVE`,
+    `/tss/${tssId}/tx?states%5B0%5D=ACTIVE`, // states[0]=ACTIVE, Form aus der fiskaly-Doku
   );
   return body.data ?? [];
 }

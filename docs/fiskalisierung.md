@@ -85,8 +85,11 @@ fiskaly-Dashboard). USt-Mapping: Speisen 7 % / Getränke 19 % — Quelle
 - **ENV-Inventar:** siehe `.env.example` (FISKALY_*, STRIPE_TERMINAL_READER_ID, CRON_SECRET).
 - **DB:** `lib/db/supabase_fiscal_transactions.sql` (RLS an, keine Policies —
   nur service_role; Beleg-Zugriff läuft über `/api/receipt/:id`).
-- **Firmendaten** (Name/Adresse/StNr für Beleg + Abschluss):
+- **Firmendaten:** zwei Pflegeorte. Für den selbst gerenderten **Beleg**:
   `artifacts/api-server/src/fiskaly/config.ts` — **Steuernummer vor Go-Live eintragen!**
+  Für den **DSFinV-K-Abschluss** zieht fiskaly Name/Adresse/StNr aus der
+  **Organisation im fiskaly-Dashboard** (das Closing-JSON hat kein `company`-Feld)
+  — dort ebenfalls vor Go-Live vollständig pflegen.
 - **ELSTER-Kassenmeldung** (§146a(4) AO, binnen 1 Monat nach Inbetriebnahme):
   Datenblatt in `docs/ELSTER-Kassenmeldung.md`.
 
@@ -97,5 +100,7 @@ fiskaly-Dashboard). USt-Mapping: Speisen 7 % / Getränke 19 % — Quelle
 - Milchmischgetränke pauschal 19 % (Einzelfälle ggf. 7 % — Steuerberater fragen,
   Kommentar in `products.ts`).
 - Refunds laufen über das Stripe-Dashboard + orderbird-Prozess, nicht über den Kiosk.
-- DSFinV-K-Schema-Details (`buildCashPointClosing`) beim ersten Test-Closing
-  gegen die fiskaly-Test-API verifizieren (wie SIGN-Smoke).
+- DSFinV-K-Schema (`buildCashPointClosing`) ist gegen die offizielle OpenAPI-Spec
+  (`https://dsfinvk.fiskaly.com/api/v1/_spec.json`) verifiziert: Beträge als Zahlen,
+  `security.tss_tx_id` = SIGN-UUID pro Transaktion, Export-Zeitraum im Body
+  (`business_date_start/_end`). Erstes Test-Closing auf Preview bestätigt es end-to-end.

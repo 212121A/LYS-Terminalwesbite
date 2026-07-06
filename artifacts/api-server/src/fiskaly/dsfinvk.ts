@@ -3,12 +3,15 @@
  * fiskaly DSFinV-K API v1 — Kassenabschlüsse (Cash Point Closing) + Export-TAR
  * fürs Finanzamt. Eigene Basis-URL (FISKALY_DSFINVK_BASE_URL), gleiche Keys.
  *
- * ⚠️ Die Closing-Struktur folgt dem DSFinV-K-2.x-Schema der fiskaly-Doku —
- * beim ersten E2E-Test gegen die Test-Umgebung verifizieren (wie SIGN-Smoke).
+ * Struktur gegen die offizielle OpenAPI-Spec verifiziert
+ * (https://dsfinvk.fiskaly.com/api/v1/_spec.json, Stand 2026-07):
+ * Beträge sind JSON-Zahlen (nicht Strings wie bei SIGN), `head` kennt kein
+ * `company` (Firmendaten zieht fiskaly aus der Organisation), und jede
+ * Transaktion braucht `security.tss_tx_id` = SIGN-Transaktions-UUID.
  */
 import { randomUUID, createHash } from "node:crypto";
-import { getFiskalyEnv, FISCAL_BUSINESS, CASH_REGISTER } from "./config.js";
-import { centsToAmount, VAT_RATE_PERCENT, type VatRate } from "./receipt.js";
+import { getFiskalyEnv, CASH_REGISTER } from "./config.js";
+import { VAT_RATE_PERCENT, type VatRate } from "./receipt.js";
 
 function dsfinvkBaseUrl(): string {
   const url = process.env.FISKALY_DSFINVK_BASE_URL?.replace(/\/$/, "");
@@ -62,22 +65,27 @@ export function deterministicUuid(seed: string): string {
   ].join("-");
 }
 
+/** DSFinV-K will Beträge als JSON-Zahl mit max. 2 Dezimalen (multipleOf 0.01). */
+function centsToEuro(cents: number): number {
+  return Math.round(cents) / 100;
+}
+
 /** Kasse einmalig/idempotent im DSFinV-K-Kontext registrieren (Stammdaten). */
 export async function upsertCashRegister(): Promise<void> {
   const { clientId, tssId } = getFiskalyEnv();
   await request("PUT", `/cash_registers/${clientId}`, {
-    cash_register_type: { type: "MASTER" },
+    cash_register_type: { type: "MASTER", tss_id: tssId },
     brand: CASH_REGISTER.brand,
     model: CASH_REGISTER.model,
     software: { brand: CASH_REGISTER.brand, version: CASH_REGISTER.softwareVersion },
     base_currency_code: CASH_REGISTER.baseCurrencyCode,
     processing_flags: { unable_to_report_tse: false },
-    metadata: { tss_id: tssId },
   });
 }
 
 export type ClosingTransaction = {
   fiscalId: string;
+  tseTxId: string | null; // SIGN-Transaktions-UUID (Spalte tse_tx_id)
   tseTxNumber: number | null;
   createdAt: string; // ISO
   totalCents: number;
@@ -116,9 +124,9 @@ export function buildCashPointClosing(
 
   const amountsPerVat = [...vatTotals.entries()].map(([rate, { incl, vat }]) => ({
     vat_definition_export_id: VAT_EXPORT_ID[rate],
-    incl_vat: centsToAmount(incl),
-    excl_vat: centsToAmount(incl - vat),
-    vat: centsToAmount(vat),
+    incl_vat: centsToEuro(incl),
+    excl_vat: centsToEuro(incl - vat),
+    vat: centsToEuro(vat),
   }));
 
   const first = transactions[0];
@@ -129,20 +137,11 @@ export function buildCashPointClosing(
     cash_point_closing_export_id: closingSeq,
     head: {
       business_date: businessDay,
-      first_transaction_export_id: first ? String(first.tseTxNumber ?? first.fiscalId) : null,
-      last_transaction_export_id: last ? String(last.tseTxNumber ?? last.fiscalId) : null,
+      // Z_START_ID/Z_ENDE_ID = BON_ID der ersten/letzten Transaktion,
+      // muss zu transactions[].head.transaction_export_id passen.
+      first_transaction_export_id: first ? first.fiscalId : null,
+      last_transaction_export_id: last ? last.fiscalId : null,
       export_creation_date: Math.floor(Date.now() / 1000),
-      company: {
-        name: FISCAL_BUSINESS.name,
-        tax_number: FISCAL_BUSINESS.taxNumber || "00000000000",
-        ...(FISCAL_BUSINESS.vatId ? { vat_id_number: FISCAL_BUSINESS.vatId } : {}),
-        address: {
-          street: FISCAL_BUSINESS.address.street,
-          postal_code: FISCAL_BUSINESS.address.postalCode,
-          city: FISCAL_BUSINESS.address.city,
-          country_code: FISCAL_BUSINESS.address.countryCode,
-        },
-      },
     },
     cash_statement: {
       business_cases: [
@@ -152,14 +151,14 @@ export function buildCashPointClosing(
         },
       ],
       payment: {
-        full_amount: centsToAmount(totalCents),
-        cash_amount: "0.00",
-        cash_amounts_by_currency: [{ currency_code: "EUR", amount: "0.00" }],
+        full_amount: centsToEuro(totalCents),
+        cash_amount: 0,
+        cash_amounts_by_currency: [{ currency_code: "EUR", amount: 0 }],
         payment_types: [
           {
             type: "Unbar",
             currency_code: "EUR",
-            amount: centsToAmount(totalCents),
+            amount: centsToEuro(totalCents),
           },
         ],
       },
@@ -173,17 +172,18 @@ export function buildCashPointClosing(
         timestamp_end: unixSeconds(tx.createdAt),
         transaction_export_id: tx.fiscalId,
         closing_client_id: clientId,
+        ...(tx.tseTxId ? { tx_id: tx.tseTxId } : {}),
       },
       data: {
-        full_amount_incl_vat: centsToAmount(tx.totalCents),
+        full_amount_incl_vat: centsToEuro(tx.totalCents),
         payment_types: [
-          { type: "Unbar", currency_code: "EUR", amount: centsToAmount(tx.totalCents) },
+          { type: "Unbar", currency_code: "EUR", amount: centsToEuro(tx.totalCents) },
         ],
         amounts_per_vat_id: tx.vatAmounts.map((vat) => ({
           vat_definition_export_id: VAT_EXPORT_ID[vat.vat_rate],
-          incl_vat: centsToAmount(vat.incl_vat_cents),
-          excl_vat: centsToAmount(vat.incl_vat_cents - vat.vat_cents),
-          vat: centsToAmount(vat.vat_cents),
+          incl_vat: centsToEuro(vat.incl_vat_cents),
+          excl_vat: centsToEuro(vat.incl_vat_cents - vat.vat_cents),
+          vat: centsToEuro(vat.vat_cents),
         })),
         lines: tx.items.map((item, lineIndex) => {
           const gross = item.unit_price_cents * item.quantity;
@@ -194,9 +194,9 @@ export function buildCashPointClosing(
               amounts_per_vat_id: [
                 {
                   vat_definition_export_id: VAT_EXPORT_ID[item.vat_rate],
-                  incl_vat: centsToAmount(gross),
-                  excl_vat: centsToAmount(net),
-                  vat: centsToAmount(gross - net),
+                  incl_vat: centsToEuro(gross),
+                  excl_vat: centsToEuro(net),
+                  vat: centsToEuro(gross - net),
                 },
               ],
             },
@@ -206,12 +206,16 @@ export function buildCashPointClosing(
             item: {
               number: String(lineIndex + 1),
               quantity: item.quantity,
-              price_per_unit: centsToAmount(item.unit_price_cents),
+              price_per_unit: centsToEuro(item.unit_price_cents),
             },
           };
         }),
       },
-      security: tx.tseTxNumber ? { tss_tx_id: String(tx.tseTxNumber) } : undefined,
+      // Pflichtfeld: Link zur TSE-Signatur — SIGN-Transaktions-UUID,
+      // ohne TSE-Bezug verlangt die Spec eine error_message.
+      security: tx.tseTxId
+        ? { tss_tx_id: tx.tseTxId }
+        : { error_message: "Keine TSE-Transaktion vorhanden (Zeile ohne tse_tx_id)" },
     })),
   };
 }
@@ -221,12 +225,14 @@ export async function submitCashPointClosing(closingId: string, closing: unknown
 }
 
 export async function triggerExport(startDate: string, endDate: string): Promise<{ exportId: string }> {
+  const { clientId } = getFiskalyEnv();
   const exportId = randomUUID();
-  await request(
-    "PUT",
-    `/exports/${exportId}?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`,
-    {},
-  );
+  // Auswahl per Geschäftstag (YYYY-MM-DD) im Body — nicht als Query-Params.
+  await request("PUT", `/exports/${exportId}`, {
+    client_id: clientId,
+    business_date_start: startDate,
+    business_date_end: endDate,
+  });
   return { exportId };
 }
 

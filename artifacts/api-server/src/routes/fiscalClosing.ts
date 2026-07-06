@@ -203,6 +203,7 @@ async function runClosing(supabase: SupabaseClient, businessDay: string) {
 
   const transactions: ClosingTransaction[] = list.map((row) => ({
     fiscalId: row.id,
+    tseTxId: (row.tse_tx_id as string | null) ?? null,
     tseTxNumber: (row.tse_tx_number as number | null) ?? null,
     createdAt: String(row.created_at),
     totalCents: Number(row.total_cents ?? 0),
