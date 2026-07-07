@@ -94,7 +94,11 @@ function suggestUpsell(items: CartItem[]): UpsellCategory[] {
   return picked.map((id) => ({ id, ...UPSELL_OPTIONS[id] }));
 }
 
-const N8N_TERMINAL_WEBHOOK_URL = "https://feal.app.n8n.cloud/webhook/order_made";
+// P1-2: Kasse-Flow läuft über den eigenen api-server (Validierung, Rate-Limit,
+// pending_orders-Snapshot) statt direkt an den offenen n8n-Webhook.
+// Same-Origin in Prod (Vercel-Rewrite auf /api/*); VITE_API_BASE_URL nur für
+// getrennte Origins (lokale Entwicklung ohne Vite-Proxy).
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
 async function fetchWithTimeout(input: string, init: RequestInit | undefined, timeoutMs: number): Promise<Response> {
   const ac = new AbortController();
@@ -131,20 +135,18 @@ async function submitPayAtCounter(items: CartItem[], boxOption: BoxOption | null
     };
   });
 
+  // Server macht 3 n8n-Versuche à 8 s — Timeout muss darüber liegen.
   const response = await fetchWithTimeout(
-    N8N_TERMINAL_WEBHOOK_URL,
+    `${API_BASE}/api/orders/pay-at-counter`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        origin: window.location.origin,
-        source: "terminal",
-        payment_status: "unpaid",
         box_option: boxOption,
         items: lineItems,
       }),
     },
-    65_000,
+    35_000,
   );
 
   const data = (await response.json()) as {
@@ -154,11 +156,11 @@ async function submitPayAtCounter(items: CartItem[], boxOption: BoxOption | null
     error?: string;
     message?: string;
   };
-  console.log("n8n response:", data);
+  console.log("pay-at-counter response:", data);
   if (!response.ok) throw new Error(data.error || data.message || `Bestellung fehlgeschlagen (HTTP ${response.status}).`);
-  if (!data.success) throw new Error(data.error || data.message || "No success flag returned from n8n.");
+  if (!data.success) throw new Error(data.error || data.message || "Bestellung fehlgeschlagen.");
   if (data.order_number === null || data.order_number === undefined || String(data.order_number).trim() === "") {
-    throw new Error("No order number returned from n8n");
+    throw new Error("Keine Bestellnummer erhalten.");
   }
   const params = new URLSearchParams();
   if (data.sessionId && String(data.sessionId).trim()) {
