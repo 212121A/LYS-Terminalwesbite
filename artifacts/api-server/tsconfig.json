@@ -9,6 +9,9 @@
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "noEmit": true,
+    // Erlaubt den .ts-Import der generierten Katalog-Datei, damit tsc, esbuild
+    // und `node --experimental-strip-types` (Tests) sie identisch auflösen.
+    "allowImportingTsExtensions": true,
     "rootDir": "src",
     "outDir": "dist",
     "resolveJsonModule": true

@@ -25,6 +25,7 @@ import { randomUUID } from "node:crypto";
 import { getStripe } from "../stripeClient.js";
 import { currentBusinessDay } from "../lib/businessDay.js";
 import { resolveVat } from "../lib/products.js";
+import { terminalFloorCents } from "../lib/terminalPricing.js";
 import { finalizeFiscalTransaction, rowItems } from "../lib/finalizeFiscal.js";
 import { isFiskalyConfigured } from "../fiskaly/config.js";
 import { abortTransaction, startTransaction } from "../fiskaly/client.js";
@@ -63,16 +64,24 @@ type ParsedItem = FiscalLineItem & { code?: string; boxOption?: string };
 
 /**
  * Items in Fiskal-Positionen übersetzen. Gleiche Shape wie pay-at-counter/
- * PaymentModal: { id?, itemId?, cartId?, code?, name, price (EUR), quantity }.
- * Server validiert Bounds und bestimmt den USt-Satz (Steuer-Autorität).
+ * PaymentModal: { id?, itemId?, number?, code?, name, price (EUR), quantity }.
+ *
+ * Preis-Autorität (P1-1, Floor-Guard): Der Server erzwingt Client-Preis ≥
+ * Basispreis aus dem generierten Terminal-Katalog. Unbekannte itemId → Ablehnen
+ * (jede legitime Warenkorb-Zeile hat eine Katalog-itemId; Optionen/Toppings sind
+ * in Preis+sizeLabel gefaltet, keine eigenen Zeilen). Der Server bestimmt zudem
+ * den USt-Satz (Steuer-Autorität). Modifikatoren schlagen nur auf → der
+ * legitime Preis liegt nie unter der Basis, deshalb keine False-Ablehnung.
  */
 function parseItems(raw: unknown[]): { items: ParsedItem[]; error?: string; unknownIds: string[] } {
   const items: ParsedItem[] = [];
   const unknownIds: string[] = [];
+  const underpriced: string[] = [];
 
   for (const entry of raw as Record<string, unknown>[]) {
     const id = typeof entry?.id === "string" ? entry.id.trim() : "";
     const itemId = typeof entry?.itemId === "string" ? entry.itemId.trim() : "";
+    const numberCode = typeof entry?.number === "string" ? entry.number.trim() : "";
     const code = typeof entry?.code === "string" ? entry.code.trim() : "";
     const name = typeof entry?.name === "string" ? entry.name.trim() : "";
     const priceEur = Number(entry?.price);
@@ -83,8 +92,18 @@ function parseItems(raw: unknown[]): { items: ParsedItem[]; error?: string; unkn
     }
     const unitPriceCents = Math.round(priceEur * 100);
 
-    const { vat, unknown } = resolveVat({ id, itemId, code });
-    if (unknown) unknownIds.push(id || itemId || code || name);
+    // Floor-Guard: Basispreis nachschlagen und Client-Preis dagegen prüfen.
+    const floor = terminalFloorCents({ id, itemId, number: numberCode, code });
+    if (!floor.known) {
+      unknownIds.push(itemId || numberCode || id || code || name);
+      continue; // unbekannter Artikel → nicht bepreisbar → Bestellung ablehnen
+    }
+    if (unitPriceCents < floor.floorCents) {
+      underpriced.push(`${itemId || numberCode || id}: ${unitPriceCents}<${floor.floorCents}`);
+      continue;
+    }
+
+    const { vat } = resolveVat({ id, itemId, code });
 
     items.push({
       id: id || itemId || code || name,
@@ -95,6 +114,15 @@ function parseItems(raw: unknown[]): { items: ParsedItem[]; error?: string; unkn
       vatRate: vat,
       boxOption: typeof entry?.box_option === "string" ? entry.box_option : undefined,
     });
+  }
+
+  if (unknownIds.length > 0) {
+    return { items: [], error: `Unbekannte Artikel: ${unknownIds.join(", ")}`, unknownIds };
+  }
+  if (underpriced.length > 0) {
+    // Manipulierter Client-Preis unter der Basis — Bestellung verweigern.
+    console.error("terminal checkout: Preis unter Basispreis abgelehnt:", underpriced.join("; "));
+    return { items: [], error: "Preisprüfung fehlgeschlagen.", unknownIds };
   }
 
   return { items, unknownIds };
@@ -128,11 +156,8 @@ router.post("/checkout", async (req, res) => {
     const rawItems = Array.isArray(body.items) ? body.items : [];
     if (rawItems.length === 0) return res.status(400).json({ error: "Cart is empty" });
 
-    const { items, error, unknownIds } = parseItems(rawItems);
+    const { items, error } = parseItems(rawItems);
     if (error) return res.status(400).json({ error });
-    if (unknownIds.length > 0 && process.env.NODE_ENV !== "production") {
-      console.warn("terminal checkout: unbekannte Artikel-IDs (USt-Default 7 %):", unknownIds.join(", "));
-    }
 
     const total = sumTotalCents(items);
     if (total < 50) return res.status(400).json({ error: "Betrag zu klein." });
