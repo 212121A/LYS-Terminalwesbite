@@ -8,6 +8,7 @@ import {
 import { getStripe } from "../stripeClient.js";
 // Produkt-Whitelist inkl. USt-Sätzen: seit der Fiskalisierung zentral in lib/products.ts.
 import { PRODUCTS } from "../lib/products.js";
+import { finalizeFiscalTransaction } from "../lib/finalizeFiscal.js";
 
 const router = Router();
 const checkoutLimiter = rateLimit({
@@ -57,8 +58,42 @@ router.post(
       return res.status(400).json({ error: "Invalid signature" });
     }
 
-    if (event.type === "checkout.session.completed") {
-      // Bestellung verarbeiten
+    // P2-2 Webhook-Finalizer: Stirbt der Kiosk nach erfolgreicher Zahlung,
+    // finalisiert niemand mehr per Polling — dieser Handler ist das zweite
+    // Standbein. Atomarer Claim wie in /status/:id (genau EIN Finalisierer);
+    // 0 Treffer = Polling/Self-Heal war schneller → nichts zu tun.
+    // Fehler werden nur geloggt, Antwort ist IMMER 200: Sweeper + Self-Heal
+    // sind das Netz, ein Stripe-Retry-Sturm hilft hier nicht.
+    if (event.type === "payment_intent.succeeded") {
+      const paymentIntent = event.data.object as {
+        id?: string;
+        metadata?: Record<string, unknown>;
+      };
+      const fiscalId =
+        typeof paymentIntent?.metadata?.fiscal_id === "string"
+          ? paymentIntent.metadata.fiscal_id
+          : null;
+      const supabase = fiscalId ? getSupabaseOptional() : null;
+      if (fiscalId && supabase) {
+        try {
+          const { data: claimed } = await supabase
+            .from("fiscal_transactions")
+            .update({ state: "finalizing", updated_at: new Date().toISOString() })
+            .eq("id", fiscalId)
+            .eq("state", "waiting_payment")
+            .select("*");
+          const row = claimed?.[0];
+          if (row) {
+            const result = await finalizeFiscalTransaction(supabase, row);
+            console.info(`webhook-finalizer: ${fiscalId} → ${result.state}`);
+          }
+        } catch (err: unknown) {
+          console.error(
+            "webhook-finalizer fehlgeschlagen (Polling/Sweeper sind das Netz):",
+            err instanceof Error ? err.message : err,
+          );
+        }
+      }
     }
 
     return res.json({ received: true });

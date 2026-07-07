@@ -69,6 +69,14 @@ Auth: `Authorization: Bearer $CRON_SECRET` (Vercel setzt das automatisch).
 
 Manuell anstoßen: `curl -H "Authorization: Bearer $CRON_SECRET" https://<domain>/api/fiscal/closing`
 
+## Webhook-Finalizer (P2-2, zweites Standbein neben dem Polling)
+
+Beim Go-Live in Stripe einen Webhook-Endpoint anlegen: `https://<domain>/api/stripe/webhook`,
+Event **`payment_intent.succeeded`**, und das zugehörige Secret als `STRIPE_WEBHOOK_SECRET`
+im Vercel-Projekt setzen. Stirbt der Kiosk nach der Zahlung, finalisiert der Webhook den
+Vorgang (atomarer Claim, idempotent via `finalizeFiscalTransaction`) — ohne ihn greift erst
+der Self-Heal beim nächsten Polling bzw. der nächtliche Sweeper.
+
 ## Export fürs Finanzamt / Steuerberater
 
 ```
