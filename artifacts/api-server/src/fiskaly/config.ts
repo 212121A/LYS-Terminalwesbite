@@ -11,10 +11,10 @@ export const FISCAL_BUSINESS = {
     city: "Schwäbisch Gmünd",
     countryCode: "DEU",
   },
-  // ⚠️ Vor Go-Live vom Steuerberater bestätigen lassen und eintragen —
-  // Pflichtangabe auf dem Beleg und im DSFinV-K-Export.
+  // ⚠️ Steuernummer vom Steuerberater vor Go-Live eintragen (für ELSTER-
+  // Kassenmeldung nötig). Die USt-IdNr genügt als Steuer-ID auf dem Beleg.
   taxNumber: "",
-  vatId: "",
+  vatId: "DE461819020",
 } as const;
 
 /** Kennung dieser Kasse im DSFinV-K-Export (frei wählbar, aber stabil halten). */
