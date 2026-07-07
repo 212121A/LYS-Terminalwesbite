@@ -53,7 +53,12 @@ Abzweige: `canceled` (Abbruch/Reader busy), `payment_failed` (PI canceled),
   und TSE-Transaktion ab. Bezahlte-aber-nie-finalisierte Vorgänge werden als
   `tse_error` markiert und geloggt → manuell prüfen (Kunde zahlte, Küche weiß nichts!).
 
-## Täglicher Cron (`/api/fiscal/closing`, 02:30 UTC)
+## Täglicher Cron (`/api/fiscal/closing`, 03:30 UTC)
+
+> P2-6: 03:30 UTC = 04:30 (Winter) bzw. 05:30 (Sommer) Europe/Berlin — liegt damit in
+> BEIDEN Zeitzonen-Phasen NACH dem Business-Day-Cutoff 04:00 Berlin. Der frühere
+> 02:30-UTC-Lauf lag im Winter (03:30 Berlin) VOR dem Cutoff → Closing des Vortags
+> systematisch einen Tag verspätet. Deploy-Verbotsfenster entsprechend: 04:00–06:00 Berlin.
 
 Auth: `Authorization: Bearer $CRON_SECRET` (Vercel setzt das automatisch).
 1. **Sweeper** — Vorgänge >30 min in `created`/`waiting_payment` abräumen +

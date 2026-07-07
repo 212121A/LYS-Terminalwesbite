@@ -375,9 +375,18 @@ router.post("/cancel/:id", async (req, res) => {
     }
 
     await abortTseQuietly(row.tse_tx_id, rowItems(row), (msg) => console.error(msg));
-    await supabase.from("fiscal_transactions")
+    // P2-5: State-Guard gegen das TOCTOU-Race — zwischen dem Read oben und
+    // diesem Update kann das Polling den Vorgang bereits finalisiert haben.
+    // Ohne Guard würde ein 'completed' hier zu 'canceled' überschrieben
+    // (bezahlter Vorgang sähe aus wie storniert).
+    const { data: cancelled } = await supabase.from("fiscal_transactions")
       .update({ state: "canceled", updated_at: new Date().toISOString() })
-      .eq("id", fiscalId);
+      .eq("id", fiscalId)
+      .in("state", ["created", "waiting_payment"])
+      .select("id");
+    if (!cancelled || cancelled.length === 0) {
+      return res.status(409).json({ error: "Zahlung ist bereits abgeschlossen." });
+    }
 
     return res.json({ ok: true, state: "canceled" });
   } catch (err: unknown) {
