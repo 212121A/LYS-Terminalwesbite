@@ -93,7 +93,9 @@ fiskaly-Dashboard). USt-Mapping: Speisen 7 % / Getränke 19 % — Quelle
 - **DB:** `lib/db/supabase_fiscal_transactions.sql` (RLS an, keine Policies —
   nur service_role; Beleg-Zugriff läuft über `/api/receipt/:id`).
 - **Firmendaten:** zwei Pflegeorte. Für den selbst gerenderten **Beleg**:
-  `artifacts/api-server/src/fiskaly/config.ts` — **Steuernummer vor Go-Live eintragen!**
+  `artifacts/api-server/src/fiskaly/config.ts` — Name „LYS Noodles & Rice", USt-IdNr `DE461819020`
+  gesetzt; **`taxNumber` (Steuernummer) noch LEER** — nur für die ELSTER-Kassenmeldung nötig
+  (Nachreichung binnen 1 Monat, kein Go-Live-Blocker; die USt-IdNr genügt als Steuer-ID auf dem Beleg).
   Für den **DSFinV-K-Abschluss** zieht fiskaly Name/Adresse/StNr aus der
   **Organisation im fiskaly-Dashboard** (das Closing-JSON hat kein `company`-Feld)
   — dort ebenfalls vor Go-Live vollständig pflegen.
