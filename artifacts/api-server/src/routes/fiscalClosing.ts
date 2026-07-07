@@ -5,6 +5,9 @@
  *   GET|POST /api/fiscal/closing  (Auth: Bearer CRON_SECRET)
  *     1) Sweeper: verwaiste Vorgänge (>30 min created/waiting_payment)
  *        → PI canceln, TSE-tx als CANCELLATION beenden, Zeile canceled.
+ *        P0-1: hängende finalizing-Vorgänge mit bezahltem PI werden
+ *        NACHFINALISIERT (lib/finalizeFiscal.ts) statt storniert — und zwar
+ *        VOR dem TSS-Sweep, der die ACTIVE-Tx sonst als CANCELLATION killt.
  *        Zusätzlich: ACTIVE-Transaktionen direkt auf der TSS abräumen.
  *     2) n8n-Retry: completed-Zeilen mit n8n_posted=false erneut zur Küche.
  *     3) Closing: Vortag (Berlin-Geschäftstag) → Cash-Point-Closing an DSFinV-K,
@@ -19,6 +22,7 @@ import { Router, type Request, type Response, type NextFunction } from "express"
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getStripe } from "../stripeClient.js";
 import { currentBusinessDay } from "../lib/businessDay.js";
+import { finalizeFiscalTransaction } from "../lib/finalizeFiscal.js";
 import { isFiskalyConfigured } from "../fiskaly/config.js";
 import { abortTransaction, listOpenTransactions } from "../fiskaly/client.js";
 import { buildReceiptSchema, type FiscalLineItem, type VatRate } from "../fiskaly/receipt.js";
@@ -73,7 +77,9 @@ function previousBusinessDay(): string {
   return currentBusinessDay(new Date(Date.now() - 24 * 60 * 60 * 1000));
 }
 
-async function runSweeper(supabase: SupabaseClient): Promise<{ swept: number; tseSwept: number }> {
+async function runSweeper(
+  supabase: SupabaseClient,
+): Promise<{ swept: number; recovered: number; tseSwept: number }> {
   const stripe = getStripe();
   const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
 
@@ -118,6 +124,51 @@ async function runSweeper(supabase: SupabaseClient): Promise<{ swept: number; ts
     }
   }
 
+  // P0-1: In 'finalizing' hängengebliebene Vorgänge (Crash zwischen Claim und
+  // Abschluss, Self-Heal im Polling kam nicht mehr — Kiosk aus). Zahlung
+  // succeeded → NACHFINALISIEREN statt stornieren; nie bezahlt → abräumen.
+  // Muss VOR dem TSS-Sweep laufen, sonst beendet der die bezahlte ACTIVE-Tx
+  // als CANCELLATION (bezahlt + storniert = fiskalisch falsch).
+  let recovered = 0;
+  const { data: stuckRows } = await supabase
+    .from("fiscal_transactions")
+    .select("*")
+    .eq("state", "finalizing")
+    .lt("updated_at", cutoff);
+  for (const row of (stuckRows ?? []) as Row[]) {
+    try {
+      const paymentIntent = row.payment_intent_id
+        ? await stripe.paymentIntents.retrieve(row.payment_intent_id as string)
+        : null;
+      if (paymentIntent?.status === "succeeded") {
+        const result = await finalizeFiscalTransaction(supabase, row);
+        if (result.updated) recovered += 1;
+        console.error(
+          `Sweeper: hängender finalizing-Vorgang ${row.id} nachfinalisiert → ${result.state}` +
+            (result.state === "tse_error" ? " (manuell prüfen!)" : ""),
+        );
+        continue;
+      }
+      // Claim ohne erfolgreiche Zahlung (sollte nicht vorkommen) → abräumen.
+      if (row.payment_intent_id) {
+        await stripe.paymentIntents.cancel(row.payment_intent_id as string).catch(() => {});
+      }
+      if (row.tse_tx_id) {
+        await abortTransaction(
+          row.tse_tx_id as string,
+          2,
+          buildReceiptSchema(rowLineItems(row), { receiptType: "CANCELLATION" }),
+        ).catch(() => {});
+      }
+      await supabase.from("fiscal_transactions")
+        .update({ state: "canceled", updated_at: new Date().toISOString() })
+        .eq("id", row.id).eq("state", "finalizing");
+      swept += 1;
+    } catch (err: unknown) {
+      console.error(`Sweeper: finalizing-Vorgang ${row.id} fehlgeschlagen:`, err instanceof Error ? err.message : err);
+    }
+  }
+
   // Sicherheitsnetz: ACTIVE-Transaktionen direkt auf der TSS (z. B. Zeile fehlt).
   let tseSwept = 0;
   try {
@@ -136,7 +187,7 @@ async function runSweeper(supabase: SupabaseClient): Promise<{ swept: number; ts
     console.error("Sweeper: TSS-Abfrage fehlgeschlagen:", err instanceof Error ? err.message : err);
   }
 
-  return { swept, tseSwept };
+  return { swept, recovered, tseSwept };
 }
 
 async function retryN8n(supabase: SupabaseClient): Promise<number> {

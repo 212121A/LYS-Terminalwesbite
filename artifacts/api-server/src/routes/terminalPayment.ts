@@ -14,6 +14,9 @@
  * Compliance: Die TSE-Transaktion startet beim Vorgangsbeginn und wird IMMER
  * beendet. Der Stripe-Webhook finalisiert bewusst NICHT (ein Schreiber:
  * das Polling); Verwaiste räumt der Sweeper in /api/fiscal/closing ab.
+ * Hängt ein Vorgang in 'finalizing' (Crash mitten im Abschluss), heilt ihn
+ * das Polling nach 90 s selbst; Rest-Fälle finalisiert der Sweeper nach
+ * (lib/finalizeFiscal.ts — idempotent, ein Schreiber via State-Guard).
  */
 import { Router } from "express";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -22,12 +25,9 @@ import { randomUUID } from "node:crypto";
 import { getStripe } from "../stripeClient.js";
 import { currentBusinessDay } from "../lib/businessDay.js";
 import { resolveVat } from "../lib/products.js";
+import { finalizeFiscalTransaction, rowItems } from "../lib/finalizeFiscal.js";
 import { isFiskalyConfigured } from "../fiskaly/config.js";
-import {
-  abortTransaction,
-  finishTransaction,
-  startTransaction,
-} from "../fiskaly/client.js";
+import { abortTransaction, startTransaction } from "../fiskaly/client.js";
 import {
   buildReceiptSchema,
   buildVatAmounts,
@@ -43,9 +43,6 @@ const terminalLimiter = rateLimit({
   message: { error: "Zu viele Anfragen. Bitte warte kurz." },
 });
 router.use(terminalLimiter);
-
-const N8N_ORDER_WEBHOOK_URL =
-  process.env.N8N_ORDER_WEBHOOK_URL?.trim() || "https://feal.app.n8n.cloud/webhook/order_made";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -101,72 +98,6 @@ function parseItems(raw: unknown[]): { items: ParsedItem[]; error?: string; unkn
   }
 
   return { items, unknownIds };
-}
-
-/** n8n-Post mit engem Budget (2 Versuche × 6 s) — muss in maxDuration 30 passen. */
-async function postPaidOrderToN8n(payload: Record<string, unknown>): Promise<{ orderNumber: string | null }> {
-  let lastError: Error | null = null;
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
-    try {
-      const response = await fetch(N8N_ORDER_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(6000),
-      });
-      if (!response.ok) throw new Error(`n8n webhook HTTP ${response.status}`);
-      const raw = await response.text();
-      let parsed: Record<string, unknown> = {};
-      try {
-        parsed = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
-      } catch {
-        parsed = {};
-      }
-      const value = parsed.order_number ?? parsed.current_number;
-      const orderNumber =
-        typeof value === "number" && Number.isFinite(value)
-          ? String(value)
-          : typeof value === "string" && value.trim()
-            ? value.trim()
-            : null;
-      return { orderNumber };
-    } catch (err: unknown) {
-      lastError = err instanceof Error ? err : new Error("n8n webhook error");
-      if (attempt === 1) await new Promise((resolve) => setTimeout(resolve, 300));
-    }
-  }
-  throw lastError ?? new Error("n8n webhook failed");
-}
-
-function n8nPayload(fiscalId: string, items: ParsedItem[], boxOption: string | null) {
-  return {
-    source: "terminal",
-    paymentType: "card-terminal",
-    payment_status: "paid",
-    sessionId: fiscalId,
-    createdAt: new Date().toISOString(),
-    totalEur: Number((sumTotalCents(items) / 100).toFixed(2)),
-    box_option: boxOption,
-    items: items.map((item) => ({
-      id: item.id,
-      code: item.code,
-      name: item.name,
-      price: item.unitPriceCents / 100,
-      quantity: item.quantity,
-      ...(item.boxOption ? { box_option: item.boxOption } : {}),
-    })),
-  };
-}
-
-function rowItems(row: { items: unknown }): FiscalLineItem[] {
-  const raw = Array.isArray(row.items) ? row.items : [];
-  return (raw as Record<string, unknown>[]).map((item) => ({
-    id: String(item.id ?? ""),
-    name: String(item.name ?? ""),
-    quantity: Number(item.quantity ?? 1),
-    unitPriceCents: Number(item.unit_price_cents ?? 0),
-    vatRate: item.vat_rate === "NORMAL" ? "NORMAL" : "REDUCED_1",
-  }));
 }
 
 /** TSE-Transaktion als Abbruch beenden; Fehler nur loggen (Sweeper ist Fallback). */
@@ -317,7 +248,29 @@ router.get("/status/:id", async (req, res) => {
       return res.json({ state: row.state });
     }
     if (row.state === "finalizing") {
-      return res.json({ state: "finalizing" });
+      // P0-1 Self-Heal: Starb der finalisierende Request (Crash/Timeout
+      // zwischen Claim und finalem Update), hinge die Zeile sonst für immer
+      // hier — Geld eingezogen, keine Order, kein Beleg. Nach 90 s ohne
+      // Fortschritt re-claimt genau EIN Poller (atomar über updated_at)
+      // und holt die Finalisierung nach.
+      const STUCK_MS = 90_000;
+      const updatedAt = Date.parse(String(row.updated_at ?? ""));
+      if (Number.isFinite(updatedAt) && Date.now() - updatedAt < STUCK_MS) {
+        return res.json({ state: "finalizing" });
+      }
+      const { data: reclaimed } = await supabase
+        .from("fiscal_transactions")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", fiscalId)
+        .eq("state", "finalizing")
+        .lt("updated_at", new Date(Date.now() - STUCK_MS).toISOString())
+        .select("id");
+      if (!reclaimed || reclaimed.length === 0) {
+        return res.json({ state: "finalizing" });
+      }
+      console.warn(`Self-Heal: hängender finalizing-Vorgang ${fiscalId} wird nachfinalisiert.`);
+      const healed = await finalizeFiscalTransaction(supabase, row);
+      return res.json({ state: "completed", order_number: healed.orderNumber, receipt_id: fiscalId });
     }
     if (row.state !== "waiting_payment" || !row.payment_intent_id) {
       return res.json({ state: "waiting" });
@@ -349,58 +302,14 @@ router.get("/status/:id", async (req, res) => {
       return res.json({ state: "finalizing" });
     }
 
-    const items = rowItems(row);
-
-    // 1) TSE FINISH (RECEIPT). Bei TSE-Fehler: Zahlung ist durch — Order trotzdem
-    //    zur Küche, Ausfall dokumentieren (tse_error) und laut loggen.
-    let tseUpdate: Record<string, unknown> = {};
-    let tseFailed = false;
-    try {
-      const finished = await finishTransaction(row.tse_tx_id, 2, buildReceiptSchema(items));
-      tseUpdate = {
-        tse_tx_number: finished.number ?? null,
-        tse_serial: finished.tss_serial_number ?? null,
-        tse_signature_counter: finished.signature?.counter ?? null,
-        tse_signature_value: finished.signature?.value ?? null,
-        tse_signature_algorithm: finished.signature?.algorithm ?? null,
-        tse_time_format: finished.log?.timestamp_format ?? null,
-        tse_time_start: finished.time_start ? new Date(finished.time_start * 1000).toISOString() : null,
-        tse_time_end: finished.time_end ? new Date(finished.time_end * 1000).toISOString() : null,
-        tse_qr_data: finished.qr_code_data ?? null,
-        tse_raw: finished,
-      };
-    } catch (err: unknown) {
-      tseFailed = true;
-      console.error("TSE FINISH fehlgeschlagen (TSE-Ausfall dokumentieren!):", err instanceof Error ? err.message : err);
-    }
-
-    // 2) Bestellung zur Küche (n8n) — Kunde HAT bezahlt.
-    let orderNumber: string | null = null;
-    let n8nPosted = false;
-    try {
-      const boxOption =
-        ((Array.isArray(row.items) ? (row.items as Record<string, unknown>[]).find((i) => i.box_option) : null)
-          ?.box_option as string | null) ?? null;
-      const result = await postPaidOrderToN8n(n8nPayload(fiscalId, items as ParsedItem[], boxOption));
-      orderNumber = result.orderNumber;
-      n8nPosted = true;
-    } catch (err: unknown) {
-      console.error("n8n-Post nach Zahlung fehlgeschlagen (Cron retried):", err instanceof Error ? err.message : err);
-    }
-
-    await supabase.from("fiscal_transactions")
-      .update({
-        ...tseUpdate,
-        state: tseFailed ? "tse_error" : "completed",
-        order_number: orderNumber,
-        n8n_posted: n8nPosted,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", fiscalId);
+    // TSE FINISH → n8n → completed/tse_error, mit State-Guard + Rückgabecheck.
+    // Scheitert der Abschluss, bleibt die Zeile 'finalizing' und wird per
+    // Self-Heal (oben) oder Sweeper nachgeholt — kein schwarzes Loch mehr.
+    const result = await finalizeFiscalTransaction(supabase, row);
 
     // Auch bei TSE-Fehler: Kunde hat bezahlt → Success-Screen mit Nummer;
     // Beleg-Seite weist den TSE-Ausfall aus (Pflicht bei Ausfall).
-    return res.json({ state: "completed", order_number: orderNumber, receipt_id: fiscalId });
+    return res.json({ state: "completed", order_number: result.orderNumber, receipt_id: fiscalId });
   } catch (err: unknown) {
     return res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
   }

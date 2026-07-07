@@ -144,6 +144,16 @@ export async function abortTransaction(
   return finishTransaction(txId, revision, schema);
 }
 
+/**
+ * Liest eine einzelne TSE-Transaktion. Fürs idempotente Nachfinalisieren:
+ * schlägt FINISH fehl, weil die Tx schon FINISHED ist (Crash nach FINISH,
+ * vor DB-Update), liefert das hier die Signaturdaten ohne erneutes Beenden.
+ */
+export async function getTransaction(txId: string): Promise<FiskalyTxResponse> {
+  const { tssId } = getFiskalyEnv();
+  return fiskalyRequest<FiskalyTxResponse>("GET", `/tss/${tssId}/tx/${txId}`);
+}
+
 /** Offene (ACTIVE) Transaktionen der TSS — Grundlage für den Sweeper. */
 export async function listOpenTransactions(): Promise<FiskalyTxResponse[]> {
   const { tssId } = getFiskalyEnv();
