@@ -2,6 +2,7 @@ import { Router } from "express";
 import { createClient } from "@supabase/supabase-js";
 import rateLimit from "express-rate-limit";
 import { currentBusinessDay } from "../lib/businessDay.js";
+import { makeRateLimitStore } from "../lib/rateLimitStore.js";
 
 const router = Router();
 
@@ -14,6 +15,7 @@ const authLimiter = rateLimit({
   max: 10,
   skipSuccessfulRequests: true,
   message: { error: "Zu viele Fehlversuche. Bitte warte 15 Minuten." },
+  store: makeRateLimitStore("availability"),
 });
 
 function getSupabaseOptional() {

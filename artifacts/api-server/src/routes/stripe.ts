@@ -6,12 +6,14 @@ import {
   isAllowedCheckoutReturnUrl,
 } from "../lib/allowedOrigins.js";
 import { getStripe } from "../stripeClient.js";
+import { makeRateLimitStore } from "../lib/rateLimitStore.js";
 
 const router = Router();
 const checkoutLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 20,
   message: { error: "Zu viele Anfragen. Bitte warte kurz." },
+  store: makeRateLimitStore("stripe-checkout"),
 });
 const PRODUCTS: Record<string, { name: string; price: number }> = {
   "v1-regular": { name: "Nem Ran", price: 400 },
