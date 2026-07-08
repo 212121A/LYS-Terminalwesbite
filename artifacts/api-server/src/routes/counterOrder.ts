@@ -124,7 +124,7 @@ router.post("/pay-at-counter", async (req, res) => {
       return res.status(400).json({ error: "Cart is empty" });
     }
 
-    const pendingSnapshot: unknown[] = [];
+    const pendingSnapshot: Record<string, unknown>[] = [];
     let totalEur = 0;
 
     for (const item of priceItemsRaw as any[]) {
@@ -132,6 +132,10 @@ router.post("/pay-at-counter", async (req, res) => {
       const cartId = typeof item?.cartId === "string" ? item.cartId.trim() : "";
       const itemId = typeof item?.itemId === "string" ? item.itemId.trim() : "";
       const sizeLabel = typeof item?.sizeLabel === "string" ? item.sizeLabel.trim() : "";
+      // Küchen-Felder aus dem Direkt-Post-Format: Menü-Code + Box-Zustand müssen
+      // erhalten bleiben, sonst verliert der Küchen-Bon Code/Box-Angabe (P1-2).
+      const number = typeof item?.number === "string" ? item.number.trim().slice(0, 20) : "";
+      const boxOption = typeof item?.box_option === "string" ? item.box_option.trim().slice(0, 40) : "";
       const name = typeof item?.name === "string" ? item.name.trim() : "";
       const priceEur = Number(item?.price);
       const qty = normalizeQuantity(item?.quantity);
@@ -150,9 +154,15 @@ router.post("/pay-at-counter", async (req, res) => {
       if (cartId) snapshotEntry.cartId = cartId;
       if (itemId) snapshotEntry.itemId = itemId;
       if (sizeLabel) snapshotEntry.sizeLabel = sizeLabel;
+      if (number) snapshotEntry.number = number;
+      if (boxOption) snapshotEntry.box_option = boxOption;
       pendingSnapshot.push(snapshotEntry);
       totalEur += priceEur * qty;
     }
+
+    // Box-Zustand (offen/zu) auch top-level — wie der bisherige Direkt-Post.
+    const topBoxOption =
+      typeof body.box_option === "string" ? body.box_option.trim().slice(0, 40) || null : null;
 
     // Keep Stripe-like session prefix for existing downstream order processors.
     const sessionId = `cs_counter_${randomUUID()}`;
@@ -170,14 +180,22 @@ router.post("/pay-at-counter", async (req, res) => {
     }
 
     try {
+      // Items in der Form des bisherigen Frontend-Direkt-Posts (`price` statt
+      // `priceEur`) — n8n speichert items 1:1, das Küchen-Dashboard liest sie so.
+      const n8nItems = pendingSnapshot.map(({ priceEur, ...rest }) => ({
+        ...rest,
+        price: priceEur,
+      }));
+
       const webhookResult = await postOrderToN8n({
         source: "terminal",
         paymentType: "pay-at-counter",
         payment_status: "unpaid",
+        box_option: topBoxOption,
         sessionId,
         createdAt: new Date().toISOString(),
         totalEur: Number(totalEur.toFixed(2)),
-        items: pendingSnapshot,
+        items: n8nItems,
       });
 
       return res.json({

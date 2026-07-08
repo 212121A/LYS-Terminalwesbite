@@ -272,7 +272,7 @@ router.post("/create-checkout-session", async (req, res) => {
             quantity: normalizeQuantity(item?.quantity),
           };
         })
-        .filter((lineItem): lineItem is NonNullable<typeof lineItem> => Boolean(lineItem));
+        .filter((lineItem: Line | null): lineItem is Line => Boolean(lineItem));
 
       if (invalidItemIds.length > 0) {
         return res.status(400).json({
