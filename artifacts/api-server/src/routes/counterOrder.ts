@@ -2,6 +2,7 @@ import { Router } from "express";
 import { createClient } from "@supabase/supabase-js";
 import rateLimit from "express-rate-limit";
 import { randomUUID } from "node:crypto";
+import { makeRateLimitStore } from "../lib/rateLimitStore.js";
 
 const router = Router();
 
@@ -9,6 +10,7 @@ const payAtCounterLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 20,
   message: { error: "Zu viele Anfragen. Bitte warte kurz." },
+  store: makeRateLimitStore("counter"),
 });
 
 const N8N_ORDER_WEBHOOK_URL =
