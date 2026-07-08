@@ -3,9 +3,12 @@ import type { Translations } from "@/i18n/translations";
 
 /** Nur die string-wertigen Übersetzungs-Keys (keine Funktionen/Records) —
  *  damit `tr[key]` direkt als Text gerendert werden kann. */
-type TranslationTextKey = {
+// NonNullable strippt das `undefined`, das der Mapped-Type sonst aus den
+// optionalen String-Feldern von Translations (z. B. cartBarContinue?) erbt —
+// sonst wäre `tr[config.titleKey]` „Objekt mit undefined indizieren" (TS2538).
+type TranslationTextKey = NonNullable<{
   [K in keyof Translations]: Translations[K] extends string ? K : never;
-}[keyof Translations];
+}[keyof Translations]>;
 
 /** Eine auswählbare Option (Topping, Frucht, Extra). Labels sind deutsch und
  *  gehen sprachneutral als `sizeLabel` in Warenkorb und Küchen-Bon — wie die
