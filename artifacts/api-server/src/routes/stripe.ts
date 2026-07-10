@@ -51,14 +51,6 @@ const PRODUCTS: Record<string, { name: string; price: number }> = {
   "e6-regular": { name: "Garnelen Erdnuss", price: 1150 },
   "e7-regular": { name: "Tofu Erdnuss", price: 850 },
 
-  "m1-regular": { name: "Gemüse Matcha Soße", price: 700 },
-  "m2-regular": { name: "Hähnchenfleisch Matcha Soße", price: 900 },
-  "m3-regular": { name: "Paniertes Hähnchenfleisch Matcha Soße", price: 1050 },
-  "m4-regular": { name: "Fisch Matcha Soße", price: 1050 },
-  "m5-regular": { name: "Ente Matcha Soße", price: 1150 },
-  "m6-regular": { name: "Garnelen Matcha Soße", price: 1150 },
-  "m7-regular": { name: "Tofu Matcha Soße", price: 850 },
-
   "m8-regular": { name: "Gemüse Mango Soße", price: 700 },
   "m9-regular": { name: "Hähnchenfleisch Mango Soße", price: 900 },
   "m10-regular": { name: "Paniertes Hähnchenfleisch Mango Soße", price: 1050 },

@@ -2,7 +2,7 @@ import { boxMenuItems } from "@/data/menu";
 
 /** Feste Soßen-Auswahl für alle Nudel-/Reisboxen-Varianten. */
 export interface BoxSauce {
-  id: "soja" | "suessSauer" | "thaiCurryKokos" | "erdnuss" | "matcha" | "mango";
+  id: "soja" | "suessSauer" | "thaiCurryKokos" | "erdnuss" | "mango";
   /** Anzeigename und gleichzeitig „sizeLabel" im Warenkorb, damit jede Soße
    *  eine eigene Warenkorb-Zeile bekommt und mehrfach bestellbar bleibt. */
   label: string;
@@ -13,7 +13,6 @@ export const BOX_SAUCES: BoxSauce[] = [
   { id: "suessSauer",      label: "Süßsauersoße" },
   { id: "thaiCurryKokos",  label: "Thaicurry mit Kokosmilch" },
   { id: "erdnuss",         label: "Erdnusssoße" },
-  { id: "matcha",          label: "Matcha Soße" },
   { id: "mango",           label: "Mango Soße" },
 ];
 

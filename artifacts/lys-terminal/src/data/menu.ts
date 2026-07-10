@@ -243,20 +243,6 @@ export const menuData: MenuCategory[] = [
     ]),
   },
   {
-    id: "matcha-sosse",
-    name: "Matcha Soße",
-    images: ["menu-images/matchasosse-nudeln.jpg", "menu-images/matchasosse-reis.jpg"],
-    items: withCarbChoice([
-      { id: "m1", number: "M1", name: "Gemüse", price: 7.00, dishType: "gemüse", allergens: ["7", "15", "16"], additives: ["e", "g"], image: "menu-images/m1.webp" },
-      { id: "m2", number: "M2", name: "Hähnchenfleisch mit Gemüse", price: 9.00, dishType: "haehnchenGemüse", allergens: ["7", "15", "16"], additives: ["e", "g"], image: "menu-images/m2.webp" },
-      { id: "m3", number: "M3", name: "Paniertes Hähnchenfleisch mit Gemüse", price: 10.50, dishType: "paniertesHaehnchenGemüse", allergens: ["1", "1a", "7", "15", "16"], additives: ["e", "g"], image: "menu-images/m3.webp" },
-      { id: "m4", number: "M4", name: "Fisch mit Gemüse (Pangasius Filet)", price: 10.50, dishType: "fischGemüse", allergens: ["1", "1a", "4", "7", "15", "16"], additives: ["e", "g"], image: "menu-images/m4.webp" },
-      { id: "m5", number: "M5", name: "Ente mit Gemüse", price: 11.50, dishType: "enteGemüse", allergens: ["1", "1a", "7", "15", "16"], additives: ["e", "g"], image: "menu-images/m5.webp" },
-      { id: "m6", number: "M6", name: "Garnelen mit Gemüse", price: 11.50, dishType: "garnelenGemüse", allergens: ["4", "7", "15", "16"], additives: ["e", "g"], image: "menu-images/m6.webp" },
-      { id: "m7", number: "M7", name: "Tofu mit Gemüse", price: 8.50, dishType: "tofuGemüse", allergens: ["6", "7", "15", "16"], additives: ["e", "g"], image: "menu-images/m7.webp" },
-    ]),
-  },
-  {
     id: "mango-sosse",
     name: "Mango Soße",
     images: ["menu-images/mangososse-nudeln.jpg", "menu-images/mangososse-reis.jpg"],
@@ -375,7 +361,6 @@ export const menuData: MenuCategory[] = [
       { id: "25", number: "25", name: "Joghurt Bowl",   price: 6.50, dishType: "joghurtBowl",  description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: ["7"], additives: [], image: "menu-images/bowl-joghurt.webp" },
       { id: "26", number: "26", name: "Protein Bowl",   price: 6.50, dishType: "proteinBowl",  description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: ["7"], additives: [], image: "menu-images/bowl-protein.webp" },
       { id: "27", number: "27", name: "Açaí Bowl",      price: 6.50, dishType: "acaiBowl",     description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: [], additives: [], image: "menu-images/real-acai-bowl.jpg" },
-      { id: "28", number: "28", name: "Smoothie Bowl",  price: 6.50, dishType: "smoothieBowl", description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: [], additives: [], image: "menu-images/bowl-smoothie.webp" },
       { id: "29", number: "29", name: "Chia Pudding",   price: 6.50, dishType: "chiaPudding",  description: "Frische saisonale Früchte inklusive (Banane, Erdbeere, Blaubeere, Himbeere, Mango)", allergens: ["7"], additives: [], image: "menu-images/bowl-chia.webp" },
     ],
   },

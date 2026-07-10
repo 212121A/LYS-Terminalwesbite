@@ -14,7 +14,6 @@ type Tint = { bar: string; active: string };
  *  `active` das aktive Tab. Niedrige Sättigung → bleibt pastellig & warm. */
 const CATEGORY_TINTS: Record<string, Tint> = {
   "matcha-getraenke": { bar: "hsl(135 15% 93%)", active: "hsl(135 18% 85%)" },
-  "matcha-sosse": { bar: "hsl(135 15% 93%)", active: "hsl(135 18% 85%)" },
   soda: { bar: "hsl(200 16% 93%)", active: "hsl(200 20% 85%)" },
   softgetraenke: { bar: "hsl(205 16% 93%)", active: "hsl(205 20% 85%)" },
   "tra-eistee": { bar: "hsl(32 20% 93%)", active: "hsl(32 24% 85%)" },
@@ -40,7 +39,7 @@ const DEFAULT_TINT: Tint = { bar: "hsl(33 16% 93%)", active: "hsl(33 20% 85%)" }
 const CATEGORY_GROUPS: { label: string; ids: string[] }[] = [
   { label: "Boxen", ids: ["nudel-reisboxen"] },
   { label: "Vorspeisen", ids: ["vorspeisen"] },
-  { label: "Soßengerichte", ids: ["thai-curry", "süss-sauer", "soja-sosse", "erdnuss-sosse", "matcha-sosse", "mango-sosse"] },
+  { label: "Soßengerichte", ids: ["thai-curry", "süss-sauer", "soja-sosse", "erdnuss-sosse", "mango-sosse"] },
   { label: "Reis", ids: ["gebratener-reis"] },
   { label: "Matcha & Kaffee", ids: ["matcha-getraenke", "ca-phe"] },
   { label: "Tee & Soda", ids: ["tra-eistee", "soda"] },

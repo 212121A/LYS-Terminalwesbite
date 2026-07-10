@@ -60,7 +60,7 @@ const ITEM_CATEGORY: Map<string, string> = (() => {
 
 const SAVORY_CATS = new Set([
   "nudel-reisboxen", "thai-curry", "süss-sauer", "soja-sosse",
-  "erdnuss-sosse", "matcha-sosse", "mango-sosse", "gebratener-reis", "vorspeisen",
+  "erdnuss-sosse", "mango-sosse", "gebratener-reis", "vorspeisen",
 ]);
 const DRINK_CATS = new Set(["matcha-getraenke", "ca-phe", "tra-eistee", "soda", "smoothies", "softgetraenke"]);
 
