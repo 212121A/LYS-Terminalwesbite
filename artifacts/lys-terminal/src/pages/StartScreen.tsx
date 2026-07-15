@@ -10,7 +10,7 @@ export function StartScreen() {
 
   return (
     <div
-      className="relative h-screen w-screen overflow-hidden bg-contain bg-center bg-no-repeat bg-[#b8aea2]"
+      className="relative h-screen w-screen overflow-hidden bg-cover bg-center bg-no-repeat bg-[#b8aea2]"
       style={{ backgroundImage: `url(${ASSET}/landing-clean.jpg)` }}
     >
       {/* Echter Foto-Smoke (Logo herausgerechnet) als Hintergrund; scharfe LYS-Wortmarke (4K-Upscale) als transparentes Overlay. */}
