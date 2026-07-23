@@ -3,13 +3,16 @@
  * Produkt-Whitelist des Terminals — Preis- UND Steuer-Autorität des Servers.
  * Extrahiert aus routes/stripe.ts und um USt-Sätze erweitert (Fiskalisierung).
  *
- * USt (Stand ab 2026-01-01): Speisen 7 % (REDUCED_1, auch vor Ort),
- * Getränke 19 % (NORMAL). `vat` steht EXPLIZIT an jedem Eintrag — bewusst kein
- * Prefix-Matching: `m1-…m14-` sind Speisen (Matcha-/Mango-SOSSE), `m-latte-…`
- * sind Getränke. Wer hier rät, bucht falsche Steuern.
+ * USt-Regel (Vorgabe Alex 2026-07-24): **NUR `g-soft` (GD1 Softgetränke) und
+ * `g-wasser` (GD2 Wasser) = 19 % (NORMAL)**, die komplette restliche Karte
+ * = 7 % (REDUCED_1) — inkl. Matcha, Cà phê, Trà, Soda, Smoothie, Kem, Kids.
  *
- * Für den Steuerberater: Milchmischgetränke (>75 % Milch, z. B. Latte to-go)
- * KÖNNEN 7 % sein — bewusst pauschal 19 % gewählt; Einzelfälle hier umstellen.
+ * Identisch zur Website-Autorität `STANDARD_RATE_IDS` in
+ * lys-website/api/stripe/create-checkout-session.js. Beide Kanäle rechnen über
+ * denselben Stripe-Account ab — derselbe Artikel MUSS gleich besteuert werden.
+ * Wer hier etwas ändert, ändert es dort mit.
+ *
+ * `vat` steht EXPLIZIT an jedem Eintrag, bewusst kein Prefix-Matching.
  */
 
 export type VatRate = "NORMAL" | "REDUCED_1";
@@ -88,61 +91,57 @@ export const PRODUCTS: Record<string, Product> = {
   "box-tofu-regular": { name: "Nudel-/Reisbox Tofu", price: 800, vat: "REDUCED_1" },
   "box-garnelen-regular": { name: "Nudel-/Reisbox Garnelen", price: 1000, vat: "REDUCED_1" },
 
+  // Einzige beiden Artikel mit Regelsatz — siehe Kopfkommentar.
   "g-soft-regular": { name: "Softgetränke", price: 300, vat: "NORMAL" },
   "g-wasser-regular": { name: "Wasser", price: 200, vat: "NORMAL" },
-  "m-latte-regular": { name: "Matcha Latte (warm/kalt)", price: 450, vat: "NORMAL" },
-  "m-dau-regular": { name: "Matcha dâu (Erdbeere)", price: 500, vat: "NORMAL" },
-  "m-xoai-regular": { name: "Matcha xoài (Mango)", price: 500, vat: "NORMAL" },
-  "m-rasp-regular": { name: "Matcha Raspberry (Himbeere)", price: 500, vat: "NORMAL" },
-  "m-vietquat-regular": { name: "Matcha việt quất (Blaubeere)", price: 500, vat: "NORMAL" },
-  "m-dua-ananas-regular": { name: "Matcha dứa (Ananas)", price: 500, vat: "NORMAL" },
-  "m-vani-regular": { name: "Matcha vani (Vanille)", price: 500, vat: "NORMAL" },
-  "m-dua-cloud-regular": { name: "Matcha dừa (Coconut Cloud)", price: 550, vat: "NORMAL" },
-  "cp-den-regular": { name: "Cà phê đen", price: 450, vat: "NORMAL" },
-  "cp-sua-da-regular": { name: "Cà phê sữa đá", price: 500, vat: "NORMAL" },
-  "cp-den-da-regular": { name: "Cà phê đen đá", price: 450, vat: "NORMAL" },
-  "cp-nau-da-regular": { name: "Cà phê nâu đá", price: 500, vat: "NORMAL" },
-  "cp-dua-regular": { name: "Cà phê dừa", price: 500, vat: "NORMAL" },
-  "cp-bac-xiu-regular": { name: "Bạc xỉu", price: 600, vat: "NORMAL" },
-  "t-chanh-leo-regular": { name: "Trà chanh leo", price: 600, vat: "NORMAL" },
-  "t-vai-regular": { name: "Trà vải", price: 600, vat: "NORMAL" },
-  "t-dao-regular": { name: "Trà đào cam sả", price: 600, vat: "NORMAL" },
-  "t-chanh-simple-regular": { name: "Trà chanh", price: 600, vat: "NORMAL" },
-  "soda-chanh-regular": { name: "Soda chanh", price: 600, vat: "NORMAL" },
-  "soda-dao-regular": { name: "Soda đào", price: 600, vat: "NORMAL" },
-  "soda-vai-regular": { name: "Soda vải", price: 600, vat: "NORMAL" },
-  "soda-dua-regular": { name: "Soda dứa", price: 600, vat: "NORMAL" },
-  "smoothie-all-regular": { name: "Smoothie", price: 650, vat: "NORMAL" },
+  "m-latte-regular": { name: "Matcha Latte (warm/kalt)", price: 450, vat: "REDUCED_1" },
+  "m-dau-regular": { name: "Matcha dâu (Erdbeere)", price: 500, vat: "REDUCED_1" },
+  "m-xoai-regular": { name: "Matcha xoài (Mango)", price: 500, vat: "REDUCED_1" },
+  "m-rasp-regular": { name: "Matcha Raspberry (Himbeere)", price: 500, vat: "REDUCED_1" },
+  "m-vietquat-regular": { name: "Matcha việt quất (Blaubeere)", price: 500, vat: "REDUCED_1" },
+  "m-dua-ananas-regular": { name: "Matcha dứa (Ananas)", price: 500, vat: "REDUCED_1" },
+  "m-vani-regular": { name: "Matcha vani (Vanille)", price: 500, vat: "REDUCED_1" },
+  "m-dua-cloud-regular": { name: "Matcha dừa (Coconut Cloud)", price: 550, vat: "REDUCED_1" },
+  "cp-den-regular": { name: "Cà phê đen", price: 450, vat: "REDUCED_1" },
+  "cp-sua-da-regular": { name: "Cà phê sữa đá", price: 500, vat: "REDUCED_1" },
+  "cp-den-da-regular": { name: "Cà phê đen đá", price: 450, vat: "REDUCED_1" },
+  "cp-nau-da-regular": { name: "Cà phê nâu đá", price: 500, vat: "REDUCED_1" },
+  "cp-dua-regular": { name: "Cà phê dừa", price: 500, vat: "REDUCED_1" },
+  "cp-bac-xiu-regular": { name: "Bạc xỉu", price: 600, vat: "REDUCED_1" },
+  "t-chanh-leo-regular": { name: "Trà chanh leo", price: 600, vat: "REDUCED_1" },
+  "t-vai-regular": { name: "Trà vải", price: 600, vat: "REDUCED_1" },
+  "t-dao-regular": { name: "Trà đào cam sả", price: 600, vat: "REDUCED_1" },
+  "t-chanh-simple-regular": { name: "Trà chanh", price: 600, vat: "REDUCED_1" },
+  "soda-chanh-regular": { name: "Soda chanh", price: 600, vat: "REDUCED_1" },
+  "soda-dao-regular": { name: "Soda đào", price: 600, vat: "REDUCED_1" },
+  "soda-vai-regular": { name: "Soda vải", price: 600, vat: "REDUCED_1" },
+  "soda-dua-regular": { name: "Soda dứa", price: 600, vat: "REDUCED_1" },
+  "smoothie-all-regular": { name: "Smoothie", price: 650, vat: "REDUCED_1" },
   "bowl-oats1-regular": { name: "Overnight Oats", price: 650, vat: "REDUCED_1" },
   "bowl-oats2-regular": { name: "Overnight Oats mit Chia", price: 650, vat: "REDUCED_1" },
   "bowl-chia-regular": { name: "Chia Pudding", price: 650, vat: "REDUCED_1" },
-  "kem-matcha-regular": { name: "Matcha Latte mit Matcha Eis", price: 650, vat: "NORMAL" },
-  "kem-vani-regular": { name: "Matcha Latte mit Vanilleeis", price: 650, vat: "NORMAL" },
-  "kids-schoko-regular": { name: "Schoko Latte", price: 450, vat: "NORMAL" },
+  "kem-matcha-regular": { name: "Matcha Latte mit Matcha Eis", price: 650, vat: "REDUCED_1" },
+  "kem-vani-regular": { name: "Matcha Latte mit Vanilleeis", price: 650, vat: "REDUCED_1" },
+  "kids-schoko-regular": { name: "Schoko Latte", price: 450, vat: "REDUCED_1" },
 };
 
 /**
- * Getränke-Item-IDs des Terminal-Frontends (artifacts/lys-terminal/src/data/menu.ts,
- * DRINK_ITEM_IDS + Kem/Kids/GD): Matcha 01–08, Cà phê 09–14, Eistee 15–18,
- * Soda 19–22, Smoothie 23, Kem 30–31, Kids 32, Softgetränke gd1/gd2.
- * Bowls 24–29 sind SPEISEN. Vorspeisen "1"/"2" (ohne führende Null) ≠ "01"/"02".
+ * Terminal-Menü-IDs mit Regelsatz (artifacts/lys-terminal/src/data/menu.ts):
+ * ausschliesslich die Softgetränke gd1 und gd2. Alle uebrigen Terminal-IDs —
+ * Matcha 01–08, Cà phê 09–14, Eistee 15–18, Soda 19–22, Smoothie 23,
+ * Bowls 24–29, Kem 30–31, Kids 32, Vorspeisen 1/2 — laufen mit 7 %.
  */
-export const TERMINAL_DRINK_IDS: ReadonlySet<string> = new Set([
-  "01", "02", "03", "04", "05", "06", "07", "08",
-  "09", "10", "11", "12", "13", "14",
-  "15", "16", "17", "18",
-  "19", "20", "21", "22",
-  "23",
-  "30", "31", "32",
-  "gd1", "gd2",
+export const TERMINAL_STANDARD_RATE_IDS: ReadonlySet<string> = new Set([
+  "gd1",
+  "gd2",
 ]);
 
 /**
  * USt-Satz für eine Warenkorb-Position des Terminals.
  * Reihenfolge: exakte PRODUCTS-Lookups (id, id-regular, itemId-regular),
- * dann Terminal-Menü-IDs (Getränke-Set; alle übrigen numerischen IDs = Speise,
- * z. B. Vorspeisen 1/2 und Bowls 24–29), dann Box-/Gericht-Kürzel.
- * `unknown: true` = keine sichere Zuordnung — Aufrufer loggt; Default Speise.
+ * dann Terminal-Menü-IDs (Regelsatz nur gd1/gd2; alle uebrigen numerischen IDs
+ * ermaessigt), dann Box-/Gericht-Kürzel.
+ * `unknown: true` = keine sichere Zuordnung — Aufrufer loggt; Default 7 %.
  */
 export function resolveVat(item: {
   id?: string;
@@ -159,8 +158,10 @@ export function resolveVat(item: {
   }
 
   for (const candidate of candidates) {
-    if (TERMINAL_DRINK_IDS.has(candidate)) return { vat: "NORMAL", unknown: false };
-    // Numerische Terminal-IDs, die kein Getränk sind (1, 2, 24–29): Speise.
+    if (TERMINAL_STANDARD_RATE_IDS.has(candidate)) {
+      return { vat: "NORMAL", unknown: false };
+    }
+    // Alle numerischen Terminal-IDs (1, 2, 01–32): ermaessigt.
     if (/^\d{1,2}$/.test(candidate)) return { vat: "REDUCED_1", unknown: false };
     // Box-Cart-IDs ("box-gemuese-Klein") und Küchen-Kürzel ("c1", "gn3", "kr4"): Speise.
     if (/^box-/.test(candidate) || /^(gn|kn|gr|kr|[csbeavm])\d{1,2}$/.test(candidate)) {
