@@ -18,7 +18,6 @@ interface MenuItemCardProps {
   quantityInCart: (cartId: string) => number;
   onAdd: (itemId: string, name: string, price: number, sizeLabel?: string) => void;
   onRemove: (cartId: string) => void;
-  index?: number;
   /** Fallback-Bild der Kategorie, falls das Item (noch) kein eigenes `image` hat. */
   categoryImage?: string;
 }
@@ -26,13 +25,12 @@ interface MenuItemCardProps {
 /** Einheitliche Hochformat-Card: Bild oben randlos → Meta → Name → (Optionen)
  *  → Preis + „+". Eine Bildsprache für alle Produkte, fingerfreundliche Targets.
  *  Cart-State/Modal-Logik bleibt unverändert (läuft über `onAdd`/`onRemove`). */
-function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0, categoryImage }: MenuItemCardProps) {
+function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, categoryImage }: MenuItemCardProps) {
   const { tr } = useLang();
   const { isItemSoldOut } = useAvailability();
   const soldOut = isItemSoldOut(dishAvailabilityId(item));
   const [carb, setCarb] = useState<Carb>("nudel");
   const [flashKey, setFlashKey] = useState<string | null>(null);
-  const cardDelay = Math.min(index, 10) * 40;
 
   const flash = (key: string) => {
     setFlashKey(key);
@@ -173,8 +171,7 @@ function MenuItemCardBase({ item, quantityInCart, onAdd, onRemove, index = 0, ca
 
   return (
     <div
-      style={{ animationDelay: `${cardDelay}ms` }}
-      className="bg-card border border-card-border rounded-3xl overflow-hidden flex flex-col lys-card animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
+      className="bg-card border border-card-border rounded-3xl overflow-hidden flex flex-col lys-card"
       data-testid={`card-menuitem-${item.id}`}
     >
       <ProductImage src={item.image ?? categoryImage} alt={displayName} />

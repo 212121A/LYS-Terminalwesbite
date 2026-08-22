@@ -17,6 +17,9 @@ import { AllergenLegendModal } from "@/components/AllergenLegendModal";
 import { DiscountBadge } from "@/components/DiscountBadge";
 import { StaffEditOverlay } from "@/components/StaffEditOverlay";
 import { useLang } from "@/i18n/LanguageContext";
+import { ScrollSection } from "@/components/scroll/ScrollSection";
+import { variantForCategory } from "@/components/scroll/scrollVariants";
+import { motion, useScroll, useSpring } from "framer-motion";
 import { Home, Info } from "lucide-react";
 
 interface PendingSauce {
@@ -125,6 +128,10 @@ export function Terminal() {
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
   /** Zeitstempel, bis zu dem der Scroll-Spy gesperrt ist (programmatisches Scrollen). */
   const navLockRef = useRef(0);
+
+  /** Fortschrittsbalken über der Menüliste — gefedert, damit er dem Wischen nachläuft. */
+  const { scrollYProgress: menuProgress } = useScroll({ container: menuRef });
+  const menuProgressSpring = useSpring(menuProgress, { stiffness: 220, damping: 40, mass: 0.4 });
 
   const menuItemById = useMemo(() => {
     const entries = menuData.flatMap((category) =>
@@ -557,58 +564,56 @@ export function Terminal() {
               activeCategory={activeCategory}
               onSelect={handleCategorySelect}
             />
+            <motion.div
+              aria-hidden
+              className="absolute bottom-0 left-0 h-[3px] w-full origin-left bg-primary min-[1600px]:h-[6px]"
+              style={{ scaleX: menuProgressSpring }}
+            />
           </div>
 
           <div
             ref={menuRef}
-            className="flex-1 overflow-y-auto scrollbar-hide px-3 pt-2 pb-24 min-[1600px]:px-5 min-[1600px]:pb-28"
+            className="relative flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide px-3 pt-2 pb-24 min-[1600px]:px-5 min-[1600px]:pb-28"
           >
-            {visibleCategories.map((category) => {
+            {visibleCategories.map((category, index) => {
               const categoryImage = category.images?.[0];
+              const cols = view === "drinks" ? 2 : 3;
               return (
-                <div
-                  key={category.id}
-                  data-category-id={category.id}
-                  ref={(el) => { categoryRefs.current[category.id] = el; }}
-                  className="mb-10 lys-cv-section"
-                >
-                  <div className="flex items-baseline gap-4 mb-5 pt-2">
-                    <h2 className="lys-display text-[44px] min-[1600px]:text-[88px] font-semibold text-primary shrink-0 leading-tight">
-                      {getCategoryName(category.id)}
-                    </h2>
-                    <div className="flex-1 h-px bg-primary/20" />
-                  </div>
-
-                  {category.id === "nudel-reisboxen" && (
+                <ScrollSection
+                  key={`${view}-${category.id}`}
+                  categoryId={category.id}
+                  title={getCategoryName(category.id)}
+                  spec={variantForCategory(category.id, index)}
+                  containerRef={menuRef}
+                  registerRef={(el) => { categoryRefs.current[category.id] = el; }}
+                  cols={cols}
+                  gridClassName={`grid ${view === "drinks" ? "grid-cols-2" : "grid-cols-3"} gap-3 min-[1600px]:gap-6 items-stretch`}
+                  note={category.id === "nudel-reisboxen" ? (
                     <div className="mb-4 px-4 py-3 bg-muted/60 border border-border rounded-xl text-[13px] text-muted-foreground min-[1600px]:text-[20px] min-[1600px]:px-6 min-[1600px]:py-4">
                       {tr.noodleBoxNote}
                     </div>
-                  )}
-
-                  <div className={`grid ${view === "drinks" ? "grid-cols-2" : "grid-cols-3"} gap-3 min-[1600px]:gap-6 items-stretch`}>
-                    {category.boxItems
-                      ? category.boxItems.map((box, i) => (
-                          <BoxItemCard
-                            key={box.id}
-                            item={box}
-                            onAdd={handleAdd}
-                            index={i}
-                            categoryImage={categoryImage}
-                          />
-                        ))
-                      : category.items.map((item, i) => (
-                          <MenuItemCard
-                            key={item.id}
-                            item={item}
-                            quantityInCart={quantityInCart}
-                            onAdd={handleAdd}
-                            onRemove={removeItem}
-                            index={i}
-                            categoryImage={categoryImage}
-                          />
-                        ))}
-                  </div>
-                </div>
+                  ) : undefined}
+                >
+                  {category.boxItems
+                    ? category.boxItems.map((box) => (
+                        <BoxItemCard
+                          key={box.id}
+                          item={box}
+                          onAdd={handleAdd}
+                          categoryImage={categoryImage}
+                        />
+                      ))
+                    : category.items.map((item) => (
+                        <MenuItemCard
+                          key={item.id}
+                          item={item}
+                          quantityInCart={quantityInCart}
+                          onAdd={handleAdd}
+                          onRemove={removeItem}
+                          categoryImage={categoryImage}
+                        />
+                      ))}
+                </ScrollSection>
               );
             })}
           </div>
