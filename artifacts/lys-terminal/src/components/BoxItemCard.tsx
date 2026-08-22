@@ -18,17 +18,19 @@ interface BoxItemCardProps {
    *  („Gemüse · Nudel Klein") und dem Preis aufgerufen. sizeLabel ist
    *  bewusst NICHT gesetzt, damit das Soßen-Modal in Terminal.tsx öffnet. */
   onAdd: (itemId: string, name: string, price: number) => void;
+  index?: number;
   /** Fallback-Bild der Kategorie, falls die Box (noch) kein eigenes `image` hat. */
   categoryImage?: string;
 }
 
 /** Nudel-/Reisbox als einheitliche Hochformat-Card: Bild oben → Name →
  *  Nudel/Reis-Toggle → Klein/Groß-Buttons (bzw. ein „+"). */
-function BoxItemCardBase({ item, onAdd, categoryImage }: BoxItemCardProps) {
+function BoxItemCardBase({ item, onAdd, index = 0, categoryImage }: BoxItemCardProps) {
   const { tr } = useLang();
   const { isItemSoldOut } = useAvailability();
   const soldOut = isItemSoldOut(boxAvailabilityId(item));
   const [carb, setCarb] = useState<Carb>("nudel");
+  const cardDelay = Math.min(index, 10) * 40;
 
   const baseName =
     item.dishType && tr.dishNames[item.dishType]
@@ -97,7 +99,8 @@ function BoxItemCardBase({ item, onAdd, categoryImage }: BoxItemCardProps) {
 
   return (
     <div
-      className="bg-card border border-card-border rounded-3xl overflow-hidden flex flex-col lys-card"
+      style={{ animationDelay: `${cardDelay}ms` }}
+      className="bg-card border border-card-border rounded-3xl overflow-hidden flex flex-col lys-card animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
       data-testid={`card-box-${item.id}`}
     >
       <ProductImage src={item.image ?? categoryImage} alt={baseName} />
