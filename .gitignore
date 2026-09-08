@@ -36,3 +36,6 @@ yarn-debug.log*
 .cache/
 .parcel-cache/
 coverage/
+
+# --- Auto-generated (Vite-Build -> public/, siehe scripts/vercel-prepare-public.mjs) ---
+public/
