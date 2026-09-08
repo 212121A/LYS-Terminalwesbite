@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Check } from "lucide-react";
 import { BOX_SAUCES, NO_SAUCE_LABEL, NO_VEG_LABEL, type BoxSauce } from "@/data/boxSauces";
 import { useLang } from "@/i18n/LanguageContext";
+import { formatPrice } from "@/lib/discount";
 import { useAvailability } from "@/availability/AvailabilityContext";
 import { sauceAvailabilityId } from "@/lib/availability";
 
@@ -66,9 +67,7 @@ export function SauceModal({ dishName, initialSauceId, initialNoSauce, initialNo
   };
 
   const doubleMeatPrice =
-    doubleMeatSurcharge !== undefined
-      ? "+" + doubleMeatSurcharge.toFixed(2).replace(".", ",") + " €"
-      : null;
+    doubleMeatSurcharge !== undefined ? "+" + formatPrice(doubleMeatSurcharge) : null;
 
   // „Keine Soße" gehört in die Soßen-Liste, wenn es eine echte Soßen-Wahl ist
   // (Box-Pflicht oder optionale Extra-Soße). Im modifiersOnly-Modus ist es ein Toggle.

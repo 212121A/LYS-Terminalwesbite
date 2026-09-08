@@ -26,3 +26,11 @@ export function discountedPrice(price: number): number {
 export function formatPrice(price: number): string {
   return price.toFixed(2).replace(".", ",") + " €";
 }
+
+/** Aufpreis einer Option („+1,00 €"). Ohne Aufpreis das übergebene Label
+ *  („inklusive"). Rabatt bleibt außen vor — Aufpreise sind Deltas auf den
+ *  Basispreis, der Rabatt greift erst auf der fertigen Summe. */
+export function formatSurcharge(delta: number, inclusiveLabel: string): string {
+  if (delta === 0) return inclusiveLabel;
+  return "+" + formatPrice(delta);
+}

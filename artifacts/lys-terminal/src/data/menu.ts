@@ -392,13 +392,16 @@ export const menuData: MenuCategory[] = [
   },
 ];
 
-const DRINK_CATEGORY_IDS_FOR_ITEMS = new Set([
+/** Kategorien der Getränkekarte — trennt die Ansicht „Getränke" von „Speisen"
+ *  und entscheidet im Checkout, ob der Warenkorb schon ein Getränk enthält. */
+export const DRINK_CATEGORY_IDS: ReadonlySet<string> = new Set([
   "matcha-getraenke", "ca-phe", "tra-eistee", "soda", "smoothies", "softgetraenke",
 ]);
+
 /** Item-IDs aller Getränke — zur Unterscheidung Speise/Getränk (z. B. Extra-Soße im Checkout). */
 export const DRINK_ITEM_IDS: ReadonlySet<string> = new Set(
   menuData
-    .filter((c) => DRINK_CATEGORY_IDS_FOR_ITEMS.has(c.id))
+    .filter((c) => DRINK_CATEGORY_IDS.has(c.id))
     .flatMap((c) => (c.items ?? []).map((i) => i.id)),
 );
 

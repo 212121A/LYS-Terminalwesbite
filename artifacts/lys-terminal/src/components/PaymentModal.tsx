@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { X, Plus, AlertCircle, Loader2, ChevronLeft, Check, Package, PackageOpen } from "lucide-react";
 import { CartItem } from "@/store/cart";
-import { menuData, boxMenuItems, type MenuItem } from "@/data/menu";
+import { menuData, boxMenuItems, DRINK_CATEGORY_IDS, type MenuItem } from "@/data/menu";
 import { BOX_ITEM_IDS } from "@/data/boxSauces";
 import { buildKitchenIndex, toKitchenLineItem } from "@/lib/kitchenOrder";
 import { discountedPrice } from "@/lib/discount";
@@ -62,7 +62,6 @@ const SAVORY_CATS = new Set([
   "nudel-reisboxen", "thai-curry", "süss-sauer", "soja-sosse",
   "erdnuss-sosse", "mango-sosse", "gebratener-reis", "vorspeisen",
 ]);
-const DRINK_CATS = new Set(["matcha-getraenke", "ca-phe", "tra-eistee", "soda", "smoothies", "softgetraenke"]);
 
 /** Wählt bis zu 3 passende Upsell-Kategorien anhand des Warenkorbs:
  *  herzhaft → erfrischende Drinks, Bowl → Kaffee/Matcha/Wasser, Dessert → Kaffee,
@@ -75,7 +74,7 @@ function suggestUpsell(items: CartItem[]): UpsellCategory[] {
   const hasSavory = [...cats].some((c) => SAVORY_CATS.has(c));
   const hasBowl = cats.has("bowls");
   const hasDessert = cats.has("kem");
-  const hasDrink = [...cats].some((c) => DRINK_CATS.has(c));
+  const hasDrink = [...cats].some((c) => DRINK_CATEGORY_IDS.has(c));
   const onlyDrinks = hasDrink && !hasSavory && !hasBowl && !hasDessert;
 
   let ids: string[];

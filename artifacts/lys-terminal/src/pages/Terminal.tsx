@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
-import { menuData, DRINK_ITEM_IDS, DIRECT_ADD_ITEM_IDS, type MenuItem } from "@/data/menu";
+import { menuData, DRINK_CATEGORY_IDS, DRINK_ITEM_IDS, DIRECT_ADD_ITEM_IDS, type MenuItem } from "@/data/menu";
 import { BOX_ITEM_IDS, BOX_SAUCES, BOX_VEG_ITEM_IDS, BOX_DOUBLE_OPTION, NO_SAUCE_LABEL, NO_VEG_LABEL, type BoxSauce } from "@/data/boxSauces";
 import { toppingsConfigFor, TOPPING_ITEM_IDS, selectedIdsFromLabel } from "@/data/toppings";
 import { useCart, type CartItemEditMeta } from "@/store/cart";
@@ -69,9 +69,6 @@ interface PendingItemOptions {
   initialMilkId?: string;
 }
 
-const DRINK_CATEGORY_IDS = new Set([
-  "matcha-getraenke", "ca-phe", "tra-eistee", "soda", "smoothies", "softgetraenke",
-]);
 const DRINK_CATEGORIES = menuData.filter((c) => DRINK_CATEGORY_IDS.has(c.id));
 /** Speisen ohne Getränke; Nudel-/Reisboxen ganz nach vorne. */
 const FOOD_CATEGORIES = (() => {
@@ -374,27 +371,14 @@ export function Terminal() {
     }
   };
 
-  const cancelPendingSauce = () => {
+  /** Abbruch aus einem Auswahl-Modal: schließt es und verwirft einen laufenden
+   *  Edit. Es ist immer höchstens ein pending-State gesetzt, daher genügt ein
+   *  gemeinsamer Handler für alle Modals. */
+  const cancelPending = () => {
     setPendingSauce(null);
-    setEditingCartId(null);
-  };
-
-  const cancelPendingExtraSauce = () => {
     setPendingExtraSauce(null);
-    setEditingCartId(null);
-  };
-
-  const cancelPendingSauceDish = () => {
     setPendingSauceDish(null);
-    setEditingCartId(null);
-  };
-
-  const cancelPendingToppings = () => {
     setPendingToppings(null);
-    setEditingCartId(null);
-  };
-
-  const cancelPendingOptions = () => {
     setPendingItemOptions(null);
     setEditingCartId(null);
   };
@@ -677,7 +661,7 @@ export function Terminal() {
           allowDoubleMeat={BOX_DOUBLE_OPTION.has(pendingSauce.itemId)}
           doubleMeatLabel={BOX_DOUBLE_OPTION.get(pendingSauce.itemId)?.label}
           doubleMeatSurcharge={BOX_DOUBLE_OPTION.get(pendingSauce.itemId)?.surcharge}
-          onClose={cancelPendingSauce}
+          onClose={cancelPending}
           onConfirm={handleSauceConfirm}
         />
       )}
@@ -689,7 +673,7 @@ export function Terminal() {
           initialNoVeg={pendingExtraSauce.initialNoVeg}
           optional
           allowNoVeg
-          onClose={cancelPendingExtraSauce}
+          onClose={cancelPending}
           onConfirm={handleExtraSauceConfirm}
         />
       )}
@@ -702,7 +686,7 @@ export function Terminal() {
           allowNoVeg={pendingSauceDish.allowNoVeg}
           initialNoSauce={pendingSauceDish.initialNoSauce}
           initialNoVeg={pendingSauceDish.initialNoVeg}
-          onClose={cancelPendingSauceDish}
+          onClose={cancelPending}
           onConfirm={handleSauceDishConfirm}
         />
       )}
@@ -713,7 +697,7 @@ export function Terminal() {
           basePrice={pendingToppings.price}
           config={toppingsConfigFor(pendingToppings.itemId)!}
           initialSelectedIds={pendingToppings.initialSelectedIds}
-          onClose={cancelPendingToppings}
+          onClose={cancelPending}
           onConfirm={handleToppingsConfirm}
         />
       )}
@@ -725,7 +709,7 @@ export function Terminal() {
           profile={pendingItemOptions.profile}
           initialPreparationId={pendingItemOptions.initialPreparationId}
           initialMilkId={pendingItemOptions.initialMilkId}
-          onClose={cancelPendingOptions}
+          onClose={cancelPending}
           onConfirm={handleItemOptionsConfirm}
         />
       )}

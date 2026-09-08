@@ -3,6 +3,7 @@ import { X, Check } from "lucide-react";
 import type { ToppingConfig, ToppingOption } from "@/data/toppings";
 import { useLang } from "@/i18n/LanguageContext";
 import { Price } from "@/components/Price";
+import { formatSurcharge } from "@/lib/discount";
 
 interface ToppingsModalProps {
   /** Name des Gerichts, zu dem gewählt wird (Bowl oder Smoothie). */
@@ -15,11 +16,6 @@ interface ToppingsModalProps {
   /** Liefert das fertige, deutsche Label (Gruppen mit " · ", Optionen mit ", ")
    *  und den Gesamtpreis inkl. Aufpreise. */
   onConfirm: (label: string, totalPrice: number) => void;
-}
-
-function formatDelta(delta: number, inclusiveLabel: string) {
-  if (delta === 0) return inclusiveLabel;
-  return "+" + delta.toFixed(2).replace(".", ",") + " €";
 }
 
 export function ToppingsModal({ dishName, basePrice, config, initialSelectedIds, onClose, onConfirm }: ToppingsModalProps) {
@@ -128,7 +124,7 @@ export function ToppingsModal({ dishName, basePrice, config, initialSelectedIds,
                         </span>
                       </span>
                       <span className="text-[14px] text-muted-foreground tabular-nums">
-                        {formatDelta(option.priceDelta, tr.inclusive)}
+                        {formatSurcharge(option.priceDelta, tr.inclusive)}
                       </span>
                     </button>
                   );

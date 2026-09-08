@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { createClient } from "@supabase/supabase-js";
 import rateLimit from "express-rate-limit";
 import { currentBusinessDay } from "../lib/businessDay.js";
 import { makeRateLimitStore } from "../lib/rateLimitStore.js";
+import { getSupabaseOptional } from "../lib/supabase.js";
 
 const router = Router();
 
@@ -17,13 +17,6 @@ const authLimiter = rateLimit({
   message: { error: "Zu viele Fehlversuche. Bitte warte 15 Minuten." },
   store: makeRateLimitStore("availability"),
 });
-
-function getSupabaseOptional() {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) return null;
-  return createClient(supabaseUrl, serviceRoleKey);
-}
 
 function pinOk(pin: unknown): boolean {
   const expected = process.env.STAFF_PIN;

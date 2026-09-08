@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { createClient } from "@supabase/supabase-js";
 import rateLimit from "express-rate-limit";
 import { randomUUID } from "node:crypto";
 import { makeRateLimitStore } from "../lib/rateLimitStore.js";
+import { getSupabaseOptional } from "../lib/supabase.js";
+import { parseLineItems } from "../lib/orderItems.js";
 
 const router = Router();
 
@@ -15,19 +16,6 @@ const payAtCounterLimiter = rateLimit({
 
 const N8N_ORDER_WEBHOOK_URL =
   process.env.N8N_ORDER_WEBHOOK_URL?.trim() || "https://feal.app.n8n.cloud/webhook/order_made";
-
-function normalizeQuantity(value: unknown): number {
-  const qty = Math.floor(Number(value));
-  if (!Number.isFinite(qty)) return 1;
-  return Math.min(20, Math.max(1, qty));
-}
-
-function getSupabaseOptional() {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !supabaseServiceRoleKey) return null;
-  return createClient(supabaseUrl, supabaseServiceRoleKey);
-}
 
 type N8nOrderResponse = {
   success: boolean;
@@ -124,41 +112,22 @@ router.post("/pay-at-counter", async (req, res) => {
       return res.status(400).json({ error: "Cart is empty" });
     }
 
-    const pendingSnapshot: Record<string, unknown>[] = [];
-    let totalEur = 0;
-
-    for (const item of priceItemsRaw as any[]) {
-      const id = typeof item?.id === "string" ? item.id.trim() : "";
-      const cartId = typeof item?.cartId === "string" ? item.cartId.trim() : "";
-      const itemId = typeof item?.itemId === "string" ? item.itemId.trim() : "";
-      const sizeLabel = typeof item?.sizeLabel === "string" ? item.sizeLabel.trim() : "";
-      // Küchen-Felder aus dem Direkt-Post-Format: Menü-Code + Box-Zustand müssen
-      // erhalten bleiben, sonst verliert der Küchen-Bon Code/Box-Angabe (P1-2).
-      const number = typeof item?.number === "string" ? item.number.trim().slice(0, 20) : "";
-      const boxOption = typeof item?.box_option === "string" ? item.box_option.trim().slice(0, 40) : "";
-      const name = typeof item?.name === "string" ? item.name.trim() : "";
-      const priceEur = Number(item?.price);
-      const qty = normalizeQuantity(item?.quantity);
-
-      if (!name || !Number.isFinite(priceEur) || priceEur < 0 || priceEur > 999) {
-        return res.status(400).json({ error: "Ungültiger Artikel (Name/Preis)." });
-      }
-
-      const unitCents = Math.round(priceEur * 100);
-      if (unitCents < 50) {
-        return res.status(400).json({ error: "Betrag zu klein." });
-      }
-
-      const snapshotEntry: Record<string, unknown> = { name, priceEur, quantity: qty };
-      if (id) snapshotEntry.id = id;
-      if (cartId) snapshotEntry.cartId = cartId;
-      if (itemId) snapshotEntry.itemId = itemId;
-      if (sizeLabel) snapshotEntry.sizeLabel = sizeLabel;
-      if (number) snapshotEntry.number = number;
-      if (boxOption) snapshotEntry.box_option = boxOption;
-      pendingSnapshot.push(snapshotEntry);
-      totalEur += priceEur * qty;
+    const parsed = parseLineItems(priceItemsRaw);
+    if (!parsed.ok) {
+      return res.status(400).json({ error: parsed.error });
     }
+
+    // Küchen-Felder aus dem Direkt-Post-Format: Menü-Code + Box-Zustand müssen
+    // erhalten bleiben, sonst verliert der Küchen-Bon Code/Box-Angabe (P1-2).
+    const pendingSnapshot = parsed.items.map(({ snapshot }, i) => {
+      const raw = priceItemsRaw[i] as Record<string, unknown>;
+      const number = typeof raw?.number === "string" ? raw.number.trim().slice(0, 20) : "";
+      const boxOption = typeof raw?.box_option === "string" ? raw.box_option.trim().slice(0, 40) : "";
+      if (number) snapshot.number = number;
+      if (boxOption) snapshot.box_option = boxOption;
+      return snapshot;
+    });
+    const totalEur = parsed.totalEur;
 
     // Box-Zustand (offen/zu) auch top-level — wie der bisherige Direkt-Post.
     const topBoxOption =

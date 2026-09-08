@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { type MenuItem } from "@/data/menu";
 import { useLang } from "@/i18n/LanguageContext";
+import { formatSurcharge } from "@/lib/discount";
 
 type OptionProfile = NonNullable<MenuItem["optionProfile"]>;
 
@@ -29,11 +30,6 @@ const PREPARATIONS: OptionChoice[] = [
 ];
 
 const MILK_LABELS = ["Kuhmilch", "Sojamilch", "Hafermilch", "Kokosmilch"];
-
-function formatPriceDelta(price: number, inclusiveLabel: string) {
-  if (price === 0) return inclusiveLabel;
-  return "+" + price.toFixed(2).replace(".", ",") + " €";
-}
 
 function optionButtonClass(selected: boolean) {
   return `w-full min-h-14 rounded-xl border flex items-center justify-between gap-4 px-5 py-3 text-left transition-all duration-150 active:scale-[0.99] ${
@@ -133,7 +129,7 @@ export function ItemOptionsModal({
                         {option.label}
                       </span>
                       <span className="text-[14px] text-muted-foreground tabular-nums">
-                        {formatPriceDelta(option.priceDelta, tr.inclusive)}
+                        {formatSurcharge(option.priceDelta, tr.inclusive)}
                       </span>
                     </button>
                   );
@@ -169,7 +165,7 @@ export function ItemOptionsModal({
                       </span>
                     </span>
                     <span className="text-[14px] text-muted-foreground tabular-nums">
-                      {formatPriceDelta(option.priceDelta, tr.inclusive)}
+                      {formatSurcharge(option.priceDelta, tr.inclusive)}
                     </span>
                   </button>
                 );

@@ -1,5 +1,4 @@
 import express, { Router } from "express";
-import { createClient } from "@supabase/supabase-js";
 import rateLimit from "express-rate-limit";
 import {
   checkoutRedirectOrigin,
@@ -7,6 +6,8 @@ import {
 } from "../lib/allowedOrigins.js";
 import { getStripe } from "../stripeClient.js";
 import { makeRateLimitStore } from "../lib/rateLimitStore.js";
+import { getSupabaseOptional } from "../lib/supabase.js";
+import { normalizeQuantity, parseLineItems } from "../lib/orderItems.js";
 
 const router = Router();
 const checkoutLimiter = rateLimit({
@@ -111,30 +112,6 @@ const PRODUCTS: Record<string, { name: string; price: number }> = {
   "kem-vani-regular": { name: "Matcha Latte mit Vanilleeis", price: 650 },
   "kids-schoko-regular": { name: "Schoko Latte", price: 450 },
 };
-
-function normalizeQuantity(value: unknown): number {
-  const qty = Math.floor(Number(value));
-  if (!Number.isFinite(qty)) return 1;
-  return Math.min(20, Math.max(1, qty));
-}
-
-function getSupabase() {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !supabaseServiceRoleKey) {
-    throw new Error("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set");
-  }
-
-  return createClient(supabaseUrl, supabaseServiceRoleKey);
-}
-
-function getSupabaseOptional() {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !supabaseServiceRoleKey) return null;
-  return createClient(supabaseUrl, supabaseServiceRoleKey);
-}
 
 router.use("/create-checkout-session", checkoutLimiter);
 router.use("/create-payment-intent", checkoutLimiter);
@@ -277,34 +254,19 @@ router.post("/create-checkout-session", async (req, res) => {
        *  Supabase-Snapshot mitgespeichert, damit das Kitchen Dashboard Gerichte mit
        *  gleichem Anzeige-Namen (z. B. mehrere „Gemüse") unterscheiden kann.
        */
-      for (const item of priceItemsRaw as any[]) {
-        const id = typeof item?.id === "string" ? item.id.trim() : "";
-        const cartId = typeof item?.cartId === "string" ? item.cartId.trim() : "";
-        const itemId = typeof item?.itemId === "string" ? item.itemId.trim() : "";
-        const sizeLabel = typeof item?.sizeLabel === "string" ? item.sizeLabel.trim() : "";
-        const name = typeof item?.name === "string" ? item.name.trim() : "";
-        const priceEur = Number(item?.price);
-        const qty = normalizeQuantity(item?.quantity);
-        if (!name || !Number.isFinite(priceEur) || priceEur < 0 || priceEur > 999) {
-          return res.status(400).json({ error: "Ungültiger Artikel (Name/Preis)." });
-        }
-        const unitCents = Math.round(priceEur * 100);
-        if (unitCents < 50) {
-          return res.status(400).json({ error: "Betrag zu klein." });
-        }
-        const snapshotEntry: Record<string, unknown> = { name, priceEur, quantity: qty };
-        if (id) snapshotEntry.id = id;
-        if (cartId) snapshotEntry.cartId = cartId;
-        if (itemId) snapshotEntry.itemId = itemId;
-        if (sizeLabel) snapshotEntry.sizeLabel = sizeLabel;
-        pendingSnapshot.push(snapshotEntry);
+      const parsed = parseLineItems(priceItemsRaw);
+      if (!parsed.ok) {
+        return res.status(400).json({ error: parsed.error });
+      }
+      for (const item of parsed.items) {
+        pendingSnapshot.push(item.snapshot);
         lineItems.push({
           price_data: {
             currency,
-            unit_amount: unitCents,
-            product_data: { name },
+            unit_amount: item.unitCents,
+            product_data: { name: item.name },
           },
-          quantity: qty,
+          quantity: item.quantity,
         });
       }
     } else {
