@@ -1,4 +1,5 @@
-import { BOWL_ITEM_IDS } from "@/data/menu";
+// Relativ statt "@/data/menu", damit der Node-Skripttest (toppings.test.ts) importieren kann.
+import { BOWL_ITEM_IDS } from "./menu.ts";
 import type { Translations } from "@/i18n/translations";
 
 /** Nur die string-wertigen Übersetzungs-Keys (keine Funktionen/Records) —
@@ -27,6 +28,8 @@ export interface ToppingGroup {
   options: ToppingOption[];
   /** Mindestauswahl, damit „Hinzufügen" aktiv wird. Default 0. */
   min?: number;
+  /** Einfachauswahl: genau eine Option, ein Klick ersetzt die vorherige. */
+  exclusive?: boolean;
 }
 
 export interface ToppingConfig {
@@ -44,6 +47,7 @@ const BOWL_TOPPINGS: ToppingOption[] = [
   { id: "agave",       label: "Agavendicksaft", priceDelta: 0.5 },
   { id: "matcha",      label: "Matcha",         priceDelta: 2.0 },
   { id: "granola",     label: "Granola",        priceDelta: 2.0 },
+  { id: "schokogranola", label: "Schokogranola", priceDelta: 2.0 },
   { id: "schoko",      label: "Schoko",         priceDelta: 1.0 },
   { id: "kokos",       label: "Kokos",          priceDelta: 1.0 },
 ];
@@ -70,6 +74,24 @@ const BOWL_CONFIG: ToppingConfig = {
   noteExamples: "Banane, Erdbeere, Blaubeere, Himbeere, Mango",
 };
 
+const ACAI_CHIA: ToppingOption[] = [
+  { id: "chia-mit",  label: "Mit Chia Pudding",  priceDelta: 0 },
+  { id: "chia-ohne", label: "Ohne Chia Pudding", priceDelta: 0 },
+];
+
+/** Açaí Bowl (27): Pflichtwahl Chia Pudding (inklusive) vor den Toppings. */
+const ACAI_CONFIG: ToppingConfig = {
+  titleKey: "toppingsTitle",
+  groups: [
+    { id: "chia", titleKey: "chiaPuddingTitle", options: ACAI_CHIA, min: 1, exclusive: true },
+    { id: "toppings", titleKey: "toppingsTitle", options: BOWL_TOPPINGS },
+  ],
+  noteKey: "toppingsIncluded",
+  noteExamples: "Banane, Erdbeere, Blaubeere, Himbeere, Mango",
+};
+
+const ACAI_ITEM_ID = "27";
+
 const SMOOTHIE_CONFIG: ToppingConfig = {
   titleKey: "chooseOptions",
   groups: [
@@ -84,6 +106,7 @@ const SMOOTHIE_ITEM_ID = "23";
 const TOPPING_CONFIGS: Record<string, ToppingConfig> = (() => {
   const map: Record<string, ToppingConfig> = { [SMOOTHIE_ITEM_ID]: SMOOTHIE_CONFIG };
   for (const id of BOWL_ITEM_IDS) map[id] = BOWL_CONFIG;
+  map[ACAI_ITEM_ID] = ACAI_CONFIG;
   return map;
 })();
 

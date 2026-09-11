@@ -23,10 +23,16 @@ export function ToppingsModal({ dishName, basePrice, config, initialSelectedIds,
   const [selected, setSelected] = useState<Set<string>>(() => new Set(initialSelectedIds ?? []));
 
   const toggle = (id: string) => {
+    const group = config.groups.find((g) => g.options.some((o) => o.id === id));
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+        return next;
+      }
+      // Einfachauswahl-Gruppe (z. B. Chia Pudding Mit/Ohne): Klick ersetzt die Wahl.
+      if (group?.exclusive) for (const o of group.options) next.delete(o.id);
+      next.add(id);
       return next;
     });
   };
